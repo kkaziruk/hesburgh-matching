@@ -1,18 +1,18 @@
 # Hesburgh Lecture Matching: staff app
 
-A web page where staff upload `club_info.csv`, `prof_info.csv` and `lecture_info.csv`
+A web page where staff upload the club, professor and lecture spreadsheets (Excel or CSV)
 and get four matching plans side by side (Best fit, Most clubs served, Balanced, Clubs’ top choices),
 a data check, and Excel downloads.
 
 ## Priorities
 
-Step 3 of the page has presets (Standard, Bigger clubs first, Most engaged clubs,
+The **2 · Adjust priorities** tab has quick choices (Standard, Bigger clubs first, Most engaged clubs,
 Clubs' wishes first, Share the faculty, No seniority boost) and seven controls set in
 plain levels: Off, Low, Standard, High, Max. Every plan recalculates as soon as a
 control moves. Each plan card shows how its numbers moved from standard settings and how
-many clubs changed. **Save settings** downloads them as a file, and **Load settings**
+many clubs changed. **Save my settings** downloads them as a file, and **Load saved settings**
 restores them (an old weights.json also works). Every Excel download includes a
-"Settings used" sheet. Priorities and column choices live together under **Settings**.
+"Settings used" sheet. Priorities and column choices are saved together.
 
 ## Spreadsheet columns
 
@@ -23,7 +23,7 @@ punctuation, an obvious typo) are recognised automatically.
 ### Do not rename these columns
 
 Matching can't run without them. If one is renamed, the app stops and asks you to
-point it at the right column in **Settings > Columns**.
+point it at the right column with a drop-down on the **1 · Upload sheets** tab.
 
 | Sheet | Column heading | What it holds | Also recognised as |
 |---|---|---|---|
@@ -57,9 +57,7 @@ point it at the right column in **Settings > Columns**.
 
 ### If a column was renamed
 
-Open **Settings > Columns**. Each item shows ✓ (found automatically), ✎ (chosen by
-you) or ⚠ (required but missing). Pick the right column from the dropdown. **Save
-settings** keeps these choices, so next year's sheets work after one **Load settings**.
+The **1 · Upload sheets** tab says what it couldn't find and shows a drop-down for each item. Pick the column that now holds it. All columns can also be reviewed under **2 · Adjust priorities > If a column heading changed**. **Save my settings** keeps these choices, so next year's sheets work after one **Load saved settings**.
 
 ## Run it on a computer
 
