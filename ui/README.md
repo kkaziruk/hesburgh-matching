@@ -1,7 +1,7 @@
 # Hesburgh Lecture Matching: staff app
 
 A web page where staff upload the club, professor and lecture spreadsheets (Excel or CSV)
-and get four matching plans side by side (Best fit, Most clubs served, Balanced, Clubs’ top choices),
+and get several matching plans side by side (Recommended first, then Best fit, Most clubs served and Balanced),
 a data check, and Excel downloads.
 
 ## Priorities
