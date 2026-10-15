@@ -22,7 +22,7 @@ from .columns import COLUMN_SPEC
 from .loader import data_issues, detect_columns, load_inputs
 from .model import MatchData
 from .plans import DEFAULT_MODES, MODES, SUMMARY_LABELS, Plan, compare_plans, run_plans
-from .scoring import Weights
+from .scoring import WEIGHT_INFO, Weights
 
 __all__ = ["load_inputs", "data_issues", "detect_columns", "COLUMN_SPEC", "run_plans", "compare_plans", "Weights", "Plan",
-           "MatchData", "MODES", "DEFAULT_MODES", "SUMMARY_LABELS"]
+           "MatchData", "MODES", "DEFAULT_MODES", "SUMMARY_LABELS", "WEIGHT_INFO"]

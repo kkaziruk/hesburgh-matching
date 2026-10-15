@@ -6,6 +6,7 @@ Run locally:   streamlit run ui/app.py
 import json
 from pathlib import Path
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -26,37 +27,88 @@ st.set_page_config(page_title="Hesburgh Lecture Matching", page_icon="🎓", lay
 # Each priority is shown as five plain-language levels instead of raw numbers.
 LEVELS = ["Off", "Low", "Standard", "High", "Max"]
 PRIORITIES = [
-    # key, label, help, values per level, group
-    ("size", "Club size", "Bigger clubs get first call on the strongest matches.",
-     [0, 0.5, 1, 1.5, 2], "all"),
-    ("engagement", "Club engagement", "Clubs with a higher HLS engagement score get priority.",
-     [0, 0.5, 1, 1.5, 2], "all"),
-    ("choice_rank", "Clubs' ranked choices", "How much a club's 1st choice beats its 5th.",
-     [0, 0.5, 1, 1.5, 2], "all"),
-    ("title", "Speaker seniority", "Boost for deans, provosts and directors.",
-     [0, 0.5, 1, 1.5, 2], "all"),
-    ("repeat_penalty", "Avoid repeat speakers", "Steer away from speakers a club hosted in 2022–2025.",
-     [0, 0.5, 1, 2, 3], "balanced"),
-    ("spread", "Spread across faculty", "Discourage stacking several events on one professor.",
-     [0, 0.5, 1, 2, 3], "balanced"),
-    ("travel_bonus", "Professors' travel wishes", "Favour clubs in areas professors said they'd like to visit.",
-     [0, 0.5, 1, 2, 3], "balanced"),
+    # key, label, one-line summary, values per level, group
+    ("size", "Bigger clubs first", "Larger clubs get the strongest speakers before smaller clubs do.",
+     [0, 0.5, 1, 1.5, 2], "who"),
+    ("engagement", "Most active clubs first", "Clubs with a higher engagement (HLS) score get priority.",
+     [0, 0.5, 1, 1.5, 2], "who"),
+    ("choice_rank", "Respect clubs' rankings", "How strongly to favour the talk a club ranked 1st over its later picks.",
+     [0, 0.5, 1, 1.5, 2], "what"),
+    ("lecture_match", "Exact talk requested", "How much more an exact requested talk counts than just the same topic area.",
+     [0, 0.5, 1, 1.5, 2], "what"),
+    ("month_overlap", "Easy to schedule", "Favour pairs who are both free in many of the same months.",
+     [0, 0.5, 1, 1.5, 2], "what"),
+    ("format_match", "Preferred talk format", "Favour professors who offer the format the club asked for (e.g. Q&A).",
+     [0, 0.5, 1, 1.5, 2], "what"),
+    ("title", "Senior speakers", "Give deans, provosts and directors a boost for the most engaged clubs.",
+     [0, 0.5, 1, 1.5, 2], "who"),
+    ("staff_pick", "Agree with our team's picks", "Favour the speaker your team already pencilled in for a club.",
+     [0, 0.5, 1, 1.5, 2], "what"),
+    ("repeat_penalty", "Avoid repeat speakers", "Avoid sending a club someone who spoke to them in the last four years.",
+     [0, 0.5, 1, 2, 3], "fair"),
+    ("spread", "Share talks across faculty", "Avoid giving one professor several talks while others have none.",
+     [0, 0.5, 1, 2, 3], "fair"),
+    ("travel_bonus", "Honour travel wishes", "Favour clubs in places professors said they'd like to visit.",
+     [0, 0.5, 1, 2, 3], "fair"),
 ]
+# What staff see when they click "What does this do?"
+EXPLAIN = {
+    "size": "Clubs are sized AA (largest) down to F. Turning this up means a large club is more likely to get "
+            "the speaker it asked for when two clubs want the same professor. Turning it off treats every club "
+            "the same regardless of size.",
+    "engagement": "Each club has an engagement (HLS) score from its activity. Turning this up favours clubs with "
+                  "higher scores when there's competition for a speaker. Off ignores the score.",
+    "choice_rank": "Clubs list up to five talks in order. At Max, getting a club its 1st choice matters much more "
+                   "than its 3rd. At Off, any talk on the club's list counts the same.",
+    "lecture_match": "A club can ask for a specific talk or just a topic area. Higher values reward giving clubs the "
+                     "exact talk they named. Lower values are happy with any talk in the right topic.",
+    "month_overlap": "When a professor and a club share many free months, the event is easier to schedule. Higher "
+                     "values prefer those pairs. This never overrides the rule that they must share at least one month.",
+    "format_match": "Clubs choose formats such as a lecture with Q&A or a fireside chat. Higher values prefer "
+                    "professors who offer that format. It only makes a difference when the spreadsheets include "
+                    "talk formats, so this year it may change little or nothing.",
+    "title": "Deans, provosts and directors can get a small boost so they go to the most engaged clubs. Off "
+             "treats every title the same.",
+    "staff_pick": "If your team already pencilled in a speaker for a club (the '2026 Assignment' column), higher "
+                  "values make the plans more likely to keep that choice.",
+    "repeat_penalty": "Uses the 2022–2025 speaker columns. Higher values steer clubs away from someone they've "
+                      "already heard. Off allows repeats freely. Mainly affects the Balanced and Recommended plans.",
+    "spread": "Professors can offer several talks. Higher values spread talks across more faculty instead of "
+              "giving a few people most of them. Mainly affects the Balanced plan.",
+    "travel_bonus": "Professors can name places they'd like to visit. Higher values favour sending them there. "
+                    "Mainly affects the Balanced and Recommended plans.",
+}
+GROUPS = [("who", "Which clubs come first"), ("what", "What makes a good match"),
+          ("fair", "Fairness to clubs and faculty")]
+
+
+def _engine_weight_keys():
+    try:
+        import engine
+        return set(engine.Weights.__dataclass_fields__)
+    except Exception:
+        return {"size", "engagement", "title", "choice_rank", "repeat_penalty", "spread", "travel_bonus"}
+
+
+# Only offer the dials the matching engine actually understands.
+PRIORITIES = [p for p in PRIORITIES if p[0] in _engine_weight_keys()]
 PKEYS = [p[0] for p in PRIORITIES]
 STANDARD = {k: "Standard" for k in PKEYS}
 PRESETS = {
     "Standard": {},
-    "Bigger clubs first": {"size": "Max", "engagement": "Low"},
-    "Most engaged clubs": {"engagement": "Max", "size": "Low"},
-    "Clubs' wishes first": {"choice_rank": "Max", "title": "Low"},
+    "Big clubs first": {"size": "Max", "engagement": "Low"},
+    "Active clubs first": {"engagement": "Max", "size": "Low"},
+    "Clubs' wishes first": {"choice_rank": "Max", "lecture_match": "High", "title": "Low"},
+    "Fresh faces": {"repeat_penalty": "Max", "spread": "High"},
     "Share the faculty": {"spread": "Max", "repeat_penalty": "High", "travel_bonus": "High"},
-    "No seniority boost": {"title": "Off"},
+    "Keep our picks": {"staff_pick": "Max"},
 }
+PRESETS = {n: v for n, v in PRESETS.items() if n == "Standard" or any(k in PKEYS for k in v)}
 LEGACY_KEYS = {"size_weight": "size", "eng_weight": "engagement", "title_weight": "title"}
 
 
 def preset_levels(name):
-    return {**STANDARD, **PRESETS[name]}
+    return {**STANDARD, **{k: v for k, v in PRESETS[name].items() if k in STANDARD}}
 
 
 def levels_to_weights(levels):
@@ -127,9 +179,9 @@ if "preset" not in st.session_state:
 # ============================================================================ Styles
 st.markdown(f"""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap');
   .stApp, .stApp :is(p, label, input, textarea, button, li, td, th, div) {{
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }}
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; }}
   [data-testid="stAppViewContainer"] {{ background: {PAPER}; }}
   [data-testid="stHeader"], [data-testid="stSidebarCollapsedControl"], [data-testid="stToolbar"] {{ display: none; }}
   .block-container {{ padding-top: 0; padding-bottom: 3rem; max-width: 1280px; }}
@@ -140,7 +192,7 @@ st.markdown(f"""
   .band-inner {{ display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }}
   .brand .over {{ color: {GOLD}; font-size: .72rem; font-weight: 600; letter-spacing: .14em;
                   text-transform: uppercase; }}
-  .brand .mark {{ font-family: 'Source Serif 4', Georgia, serif !important; color: #fff; font-size: 1.65rem;
+  .brand .mark {{ font-family: 'Libre Baskerville', Georgia, serif !important; color: #fff; font-size: 1.65rem;
                   font-weight: 700; line-height: 1.15; }}
   .status {{ display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }}
   .pill {{ font-size: .76rem; font-weight: 500; border-radius: 99px; padding: .22rem .7rem; white-space: nowrap;
@@ -158,13 +210,13 @@ st.markdown(f"""
   /* section headers */
   .kicker {{ color: {GOLD_DARK}; font-size: .74rem; font-weight: 700; letter-spacing: .12em;
              text-transform: uppercase; margin: 1.3rem 0 .2rem 0; }}
-  .h {{ font-family: 'Source Serif 4', Georgia, serif !important; font-size: 1.85rem; font-weight: 700;
+  .h {{ font-family: 'Libre Baskerville', Georgia, serif !important; font-size: 1.6rem; font-weight: 700;
         line-height: 1.15; color: {NAVY}; margin: 0 0 .35rem 0; }}
   .lead {{ color: #4a5468; font-size: .98rem; max-width: 820px; margin-bottom: 1rem; line-height: 1.55; }}
 
   /* intro */
   .intro {{ display: grid; grid-template-columns: 1.4fr 1fr; gap: 2rem; align-items: center; padding: 1.6rem 0 .6rem 0; }}
-  .intro .big {{ font-family: 'Source Serif 4', Georgia, serif !important; font-size: 2.5rem; font-weight: 700;
+  .intro .big {{ font-family: 'Libre Baskerville', Georgia, serif !important; font-size: 2.5rem; font-weight: 700;
                  line-height: 1.12; color: {NAVY}; }}
   .intro .sub {{ color: #4a5468; margin-top: .7rem; font-size: 1.02rem; line-height: 1.6; }}
   .facts {{ background: #fff; border: 1px solid {LINE}; border-left: 4px solid {GOLD}; border-radius: 10px;
@@ -182,7 +234,7 @@ st.markdown(f"""
   .card .badge {{ display: inline-block; background: {GOLD}; color: #fff; font-size: .68rem; font-weight: 700;
                   letter-spacing: .08em; text-transform: uppercase; border-radius: 4px; padding: .12rem .45rem;
                   margin-left: .4rem; vertical-align: middle; }}
-  .card .t {{ font-family: 'Source Serif 4', Georgia, serif !important; font-weight: 700; font-size: 1.22rem;
+  .card .t {{ font-family: 'Libre Baskerville', Georgia, serif !important; font-weight: 700; font-size: 1.22rem;
               margin: .45rem 0 .3rem 0; color: {NAVY}; line-height: 1.2; }}
   .card .blurb {{ color: #5a6475; font-size: .86rem; line-height: 1.5; min-height: 7.6em; margin-bottom: .6rem; }}
   .card .changed {{ font-size: .74rem; font-weight: 600; color: #6b5200; background: #fdf3d6; border-radius: 4px;
@@ -296,41 +348,35 @@ st.markdown(f"""
   .need li {{ margin: .35rem 0; line-height: 1.5; }}
   .need b {{ color: {NAVY}; }}
   .tip {{ color: #5a6475; font-size: .88rem; margin-top: .6rem; }}
+  .stat.win {{ background: #fff6da; margin: 0 -.5rem; padding-left: .5rem; padding-right: .5rem;
+                border-radius: 6px; border-top-color: transparent; }}
+  .strong {{ font-size: .8rem; color: #24324a; background: #f2f5f9; border-radius: 6px; padding: .35rem .55rem;
+             margin-bottom: .55rem; line-height: 1.45; }}
+  .strong span {{ color: {GOLD_DARK}; font-weight: 700; text-transform: uppercase; font-size: .68rem;
+                  letter-spacing: .08em; margin-right: .25rem; }}
+  .strong.none {{ color: #6b7486; }}
+  .pick ul {{ margin: .4rem 0 0 1.1rem; padding: 0; }} .pick li {{ margin: .25rem 0; }}
+  .pick .cost {{ color: #6b6250; }}
   .pick {{ background: #fffaf0; border: 1px solid #f0dfae; border-radius: 10px; padding: .75rem 1rem;
            color: #4a3b00; margin: .3rem 0 1rem 0; font-size: .95rem; }}
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================================================ Top bar
-pills = []
-if result is not None:
-    sev = result.issues["Severity"].str.lower() if len(result.issues) else pd.Series(dtype=str)
-    n_err, n_warn = int((sev == "error").sum()), int((sev == "warning").sum())
-    pills += [f'<span class="pill">{result.n_clubs} clubs</span>',
-              f'<span class="pill">{result.n_profs} professors</span>']
-    pills.append(f'<span class="pill err">{n_err} to fix</span>' if n_err
-                 else '<span class="pill ok">Sheets look good</span>')
-    if n_warn:
-        pills.append(f'<span class="pill warn">{n_warn} to review</span>')
-elif gaps or load_error:
-    pills.append('<span class="pill err">Sheets need attention</span>')
-else:
-    pills.append('<span class="pill warn">No sheets yet</span>')
-
-st.markdown(f"""
+# ============================================================================ Header
+st.markdown("""
 <div class="band"><div class="band-inner">
   <div class="brand"><div class="over">Notre Dame Alumni Association</div>
        <div class="mark">Hesburgh Lecture Series · Speaker Matching</div></div>
-  <div class="status">{''.join(pills)}</div>
 </div></div>""", unsafe_allow_html=True)
 
-TAB_NAMES = ["Start here", "1 · Upload sheets", "2 · Adjust priorities", "3 · Compare plans", "4 · Download"]
-T_HOW, T_DATA, T_SET, T_PLANS, T_DL = st.tabs(TAB_NAMES)
+TAB_NAMES = ["Start here", "1 · Upload sheets", "2 · Adjust priorities", "3 · Compare plans",
+             "4 · Dashboard", "5 · Download"]
+T_HOW, T_DATA, T_SET, T_PLANS, T_DASH, T_DL = st.tabs(TAB_NAMES)
 
 
 def next_step(where):
     """A plain 'what to do now' box at the top of every tab."""
-    up, pr, cp, dl = (f"<b>{n}</b>" for n in TAB_NAMES[1:])
+    up, pr, cp, db, dl = (f"<b>{n}</b>" for n in TAB_NAMES[1:])
     if not files:
         kind, msg = "", f"Open the {up} tab at the top of the page and add your three spreadsheets."
     elif load_error or gaps:
@@ -343,7 +389,8 @@ def next_step(where):
             "data": f"Your spreadsheets look ready. Next, open {cp} to see the results. "
                     f"(You can change priorities in {pr} first, but you don't have to.)",
             "set": f"When you're happy with these, open {cp} to see how the plans changed.",
-            "plans": f"When you've chosen a plan, open {dl} to save it as an Excel file.",
+            "plans": f"For charts of each plan, open {db}. When you've chosen a plan, open {dl} to save it.",
+            "dash": f"When you've chosen a plan, open {dl} to save it as an Excel file.",
             "dl": "Save the Excel file and share it with your team. You can come back and change things any time.",
         }[where]
     st.markdown(f'<div class="next {kind}"><span class="lbl">What to do now</span>'
@@ -370,7 +417,7 @@ with T_HOW:
   </div>
 </div>""", unsafe_allow_html=True)
 
-    head("How it works", "Four simple steps")
+    head("How it works", "Five simple steps")
     steps = [
         ("1", "Upload sheets", "Add the three spreadsheets. The tool checks them and points out anything "
                                "missing, such as a club that didn't give its available months."),
@@ -378,9 +425,11 @@ with T_HOW:
                                    "or avoiding repeat speakers. The standard settings work well."),
         ("3", "Compare plans", "See a few complete options side by side, with every club's speaker and the "
                                "reason it was chosen. Recommended is a good place to start."),
-        ("4", "Download", "Save the plan you like as an Excel file to share with your team."),
+        ("4", "Dashboard", "Charts that show at a glance how the plans differ: how many clubs get a "
+                           "speaker, first choices, repeat speakers and talks by month."),
+        ("5", "Download", "Save the plans you like as an Excel file to share with your team."),
     ]
-    for c, (n, t, body) in zip(st.columns(4, gap="medium"), steps):
+    for c, (n, t, body) in zip(st.columns(5, gap="small"), steps):
         c.markdown(f'<div class="card step-card"><div class="num">{n}</div>'
                    f'<div class="t">{t}</div><p>{body}</p></div>', unsafe_allow_html=True)
 
@@ -415,6 +464,9 @@ with T_HOW:
             st.write("Usually not. The tool recognises most small changes and ignores extra columns. If it "
                      "can't find something important, the Upload sheets tab will ask you to point to the right "
                      "column with a simple drop-down.")
+        with st.expander("What does each priority do?"):
+            st.write("In Adjust priorities, every setting has a 'What does this do?' link underneath it that "
+                     "explains it in plain words, with an example. 'Standard' is a sensible default for all.")
         with st.expander("Is our data saved anywhere?"):
             st.write("No. Your spreadsheets are only used while this page is open and are not stored.")
         with st.expander("Can we reuse this year's settings next year?"):
@@ -548,16 +600,24 @@ with T_SET:
                                      help="Each quick choice sets the sliders below. You can adjust from there.")
             with top_r:
                 st.button("Back to standard", on_click=on_reset, width="stretch", disabled=levels == STANDARD)
-            g1, g2 = st.columns(2, gap="large")
-            for col, group, kick, note in (
-                    (g1, "all", "Which clubs come first", "Affects every plan."),
-                    (g2, "balanced", "Fairness to faculty and clubs", "Affects the Balanced plan.")):
+            st.caption("Each slider runs from Off to Max. Standard is the recommended setting. Click "
+                       "“What does this do?” under any slider for a plain explanation.")
+            gcols = st.columns(len(GROUPS), gap="medium")
+            for col, (gkey, gtitle) in zip(gcols, GROUPS):
+                items = [p for p in PRIORITIES if p[4] == gkey]
+                if not items:
+                    continue
                 with col, st.container(border=True):
-                    st.markdown(f"<div class='kicker' style='margin-top:0'>{kick}</div>"
-                                f"<div class='small'>{note}</div>", unsafe_allow_html=True)
-                    for k, label, help_, _, g in PRIORITIES:
-                        if g == group:
-                            st.select_slider(label, LEVELS, key=f"lvl_{k}", help=help_, on_change=on_slider)
+                    st.markdown(f"<div class='kicker' style='margin-top:0'>{gtitle}</div>", unsafe_allow_html=True)
+                    for k, label, summary, _, _ in items:
+                        st.select_slider(label, LEVELS, key=f"lvl_{k}", on_change=on_slider)
+                        st.markdown(f"<div class='small' style='margin-top:-.6rem'>{summary}</div>",
+                                    unsafe_allow_html=True)
+                        with st.popover("What does this do?", type="tertiary"):
+                            st.markdown(f"**{label}**")
+                            st.write(EXPLAIN.get(k, summary))
+                            st.caption("Off ignores this completely. Standard is the usual setting. "
+                                       "Max makes it count about twice as much.")
             diffs = [f"{lab} ({levels[k]})" for k, lab, *_ in PRIORITIES if levels[k] != "Standard"]
             st.caption("You're using the standard settings." if not diffs else
                        "Changed from standard: " + ", ".join(diffs) + ".")
@@ -596,6 +656,48 @@ HIGHER = {"Clubs matched", "Professors used", "Got their 1st choice", "Got a req
 LOWER = {"Repeat speakers", "Most events for one prof"}
 
 
+SHORT = {"Clubs matched": "clubs served", "Got their 1st choice": "1st choices",
+         "Got a requested lecture": "requested talks", "Repeat speakers": "fewest repeats",
+         "Professors used": "sharing talks across faculty", "Most events for one prof": "lightest busiest-professor load",
+         "Agrees with staff picks": "matching your team's picks"}
+
+
+def _diff_phrase(k, d):
+    n = abs(d)
+    return {
+        "Clubs matched": f"{n} more club{'s' if n != 1 else ''} get{'s' if n == 1 else ''} a speaker",
+        "Got their 1st choice": f"{n} more club{'s' if n != 1 else ''} get{'s' if n == 1 else ''} their 1st-choice talk",
+        "Got a requested lecture": f"{n} more club{'s' if n != 1 else ''} get{'s' if n == 1 else ''} a talk they asked for",
+        "Repeat speakers": f"{n} fewer repeat speaker{'s' if n != 1 else ''}",
+        "Professors used": f"{n} more professor{'s' if n != 1 else ''} share{'s' if n == 1 else ''} the talks",
+        "Most events for one prof": f"the busiest professor gives {n} fewer talk{'s' if n != 1 else ''}",
+        "Agrees with staff picks": f"{n} more match{'es' if n != 1 else ''} with your team's picks",
+    }[k]
+
+
+def proof_box(plans):
+    """Spell out, in numbers, what the first (recommended) plan gains over each alternative."""
+    top = plans[0]
+    lines = []
+    for other in plans[1:]:
+        gains, costs = [], []
+        for k, _ in SHOW:
+            a, b = top.summary.get(k), other.summary.get(k)
+            if a is None or b is None or a == b:
+                continue
+            better = (a > b) if k in HIGHER else (a < b)
+            (gains if better else costs).append(_diff_phrase(k, a - b))
+        if gains:
+            line = f"<li>Compared with <b>{other.label}</b>: " + "; ".join(gains)
+            if costs:
+                line += f". <span class='cost'>Trade-off: with {other.label}, {'; '.join(costs)}.</span>"
+            lines.append(line + "</li>")
+    if not lines:
+        return ""
+    return (f'<div class="pick"><b>Why {top.label}?</b> Not sure which to choose? Start with <b>{top.label}</b>. '
+            f'Here is what it gains, in numbers:<ul>{"".join(lines)}</ul></div>')
+
+
 def not_ready_note():
     if not files:
         st.info(f"Nothing to show yet. Upload your spreadsheets in {TAB_NAMES[1]} first.")
@@ -613,9 +715,7 @@ with T_PLANS:
     else:
         plans = list(result.plans.values())
         base_plans = baseline.plans
-        if any(p.key == "recommended" for p in plans):
-            st.markdown('<div class="pick"><b>Not sure which to choose?</b> Use <b>Recommended</b>. It is a '
-                        'good balance of everything below.</div>', unsafe_allow_html=True)
+        st.markdown(proof_box(plans), unsafe_allow_html=True)
 
         def leader(metric):
             vals = [p.summary.get(metric) for p in plans]
@@ -647,7 +747,8 @@ with T_PLANS:
                 v = p.summary[k]
                 shown = (f"{v} of {p.summary['Clubs total']}" if k == "Clubs matched" else
                          f"{v} of {p.summary['Professors total']}" if k == "Professors used" else v)
-                cls = ' class="best"' if p.key in leader(k) else ""
+                win = p.key in leader(k)
+                cls = ' class="best"' if win else ""
                 delta = ""
                 if not is_standard and bp is not None:
                     dv = v - bp.summary.get(k, v)
@@ -655,7 +756,12 @@ with T_PLANS:
                         good = (dv > 0) == (k in HIGHER)
                         delta = (f'<span class="d {"good" if good else "bad"}">'
                                  f'{"+" if dv > 0 else "−"}{abs(dv):g}</span>')
-                rows += f'<div class="stat"><span>{lab}</span><span><b{cls}>{shown}</b>{delta}</span></div>'
+                rows += (f'<div class="stat{" win" if win else ""}"><span>{lab}</span>'
+                         f'<span><b{cls}>{shown}</b>{delta}</span></div>')
+            wins = [short for k, lab, short in [(k, lab, SHORT.get(k, lab)) for k, lab in SHOW]
+                    if k in p.summary and p.key in leader(k)]
+            strengths = (f'<div class="strong"><span>Best for</span> {", ".join(wins)}</div>' if wins
+                         else '<div class="strong none">Doesn\'t lead on any measure</div>')
             badge = ""
             if not is_standard:
                 n = len(changed_clubs(p))
@@ -664,7 +770,7 @@ with T_PLANS:
             rec = p.key == "recommended"
             col.markdown(f'<div class="card{" rec" if rec else ""}"><div class="num">{i}</div>'
                          f'{"<span class=badge>Recommended</span>" if rec else ""}<div class="t">{p.label}</div>'
-                         f'<div class="blurb">{p.blurb}</div>{badge}{rows}</div>', unsafe_allow_html=True)
+                         f'<div class="blurb">{p.blurb}</div>{strengths}{badge}{rows}</div>', unsafe_allow_html=True)
 
         head("Details", "See who goes where")
         labels = [p.label for p in plans]
@@ -736,7 +842,97 @@ with T_PLANS:
                     st.write("Your priorities didn't change this plan.")
 
 
-# ============================================================================ 4 Download
+# ============================================================================ 4 Dashboard
+
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September",
+          "October", "November", "December"]
+SOFT = "#9AA8BD"   # the other plans, so the recommended one stands out in gold
+
+
+def plan_bars(plans, key, title, note):
+    df = pd.DataFrame({"Plan": [p.label for p in plans], "Value": [p.summary.get(key, 0) for p in plans],
+                       "Highlight": [p.key == "recommended" for p in plans]})
+    base = alt.Chart(df).encode(
+        y=alt.Y("Plan:N", sort=None, title=None, axis=alt.Axis(labelLimit=200, labelFontSize=13)),
+        x=alt.X("Value:Q", title=None, axis=alt.Axis(grid=False, labels=False, ticks=False, domain=False)))
+    bars = base.mark_bar(cornerRadiusEnd=4, height=22).encode(
+        color=alt.condition("datum.Highlight", alt.value(GOLD), alt.value(SOFT)),
+        tooltip=[alt.Tooltip("Plan:N"), alt.Tooltip("Value:Q", title=title)])
+    text = base.mark_text(align="left", dx=6, fontSize=13, fontWeight=600, color=NAVY).encode(text="Value:Q")
+    with st.container(border=True):
+        st.markdown(f"**{title}**")
+        st.caption(note)
+        st.altair_chart((bars + text).properties(height=34 * len(plans) + 10), width="stretch")
+
+
+def count_bars(series, title, note, order=None, top=None):
+    counts = series[series.astype(str).str.strip() != ""].value_counts()
+    if order:
+        counts = counts.reindex([o for o in order if o in counts.index])
+    else:
+        counts = counts.sort_values(ascending=False)
+    if top:
+        counts = counts.head(top)
+    df = counts.rename_axis("Label").reset_index(name="Talks")
+    with st.container(border=True):
+        st.markdown(f"**{title}**")
+        st.caption(note)
+        if df.empty:
+            st.write("No data for this yet.")
+            return
+        base = alt.Chart(df).encode(
+            y=alt.Y("Label:N", sort=None, title=None, axis=alt.Axis(labelLimit=220, labelFontSize=12)),
+            x=alt.X("Talks:Q", title=None, axis=alt.Axis(grid=False, labels=False, ticks=False, domain=False)))
+        chart = (base.mark_bar(color=NAVY, cornerRadiusEnd=4, height=16)
+                 + base.mark_text(align="left", dx=5, fontSize=12, color=NAVY).encode(text="Talks:Q"))
+        st.altair_chart(chart.properties(height=max(120, 24 * len(df))), width="stretch")
+
+
+with T_DASH:
+    next_step("dash")
+    head("Dashboard", "The plans at a glance",
+         "The same results as Compare plans, as charts. Gold is the Recommended plan.")
+    if not ready:
+        not_ready_note()
+    else:
+        plans = list(result.plans.values())
+        c1, c2 = st.columns(2, gap="medium")
+        with c1:
+            plan_bars(plans, "Clubs matched", "Clubs that get a speaker", "More is better.")
+            plan_bars(plans, "Repeat speakers", "Clubs getting a speaker they've had before", "Fewer is better.")
+        with c2:
+            plan_bars(plans, "Got their 1st choice", "Clubs getting the talk they ranked first", "More is better.")
+            plan_bars(plans, "Professors used", "Professors giving at least one talk",
+                      "More means the work is shared more widely.")
+
+        head("One plan in detail", "Where, when and who")
+        labels = [p.label for p in plans]
+        if st.session_state.get("dash_plan") not in labels:
+            st.session_state["dash_plan"] = labels[0]
+        st.segmented_control("Choose a plan", labels, key="dash_plan")
+        p = next(pl for pl in plans if pl.label == (st.session_state.get("dash_plan") or labels[0]))
+        m = p.matches
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Clubs with a speaker", f"{p.summary.get('Clubs matched', len(m))} of {p.summary.get('Clubs total', '')}")
+        k2.metric("Got their 1st choice", p.summary.get("Got their 1st choice", "—"))
+        k3.metric("Repeat speakers", p.summary.get("Repeat speakers", "—"))
+        k4.metric("Professors giving talks", p.summary.get("Professors used", m["Professor"].nunique()))
+        d1, d2 = st.columns(2, gap="medium")
+        with d1:
+            if "Month" in m:
+                count_bars(m["Month"].fillna(""), "Talks by month", "The suggested month for each talk.", order=MONTHS)
+            if "Choice" in m:
+                ch = m["Choice"].fillna("").replace("", "Same topic, different talk")
+                count_bars(ch, "How each club's talk ranked on its list",
+                           "1st means the club gets the talk it wanted most.",
+                           order=["1st", "2nd", "3rd", "4th", "5th", "Same topic, different talk"])
+        with d2:
+            if "Region" in m:
+                count_bars(m["Region"].fillna(""), "Talks by region", "Where the talks will happen.")
+            count_bars(m["Professor"], "Busiest professors", "The ten professors giving the most talks.", top=10)
+
+
+# ============================================================================ 5 Download
 @st.cache_data(show_spinner=False, max_entries=64)
 def excel_bytes(_result, fkey, wkey, ckey, keys, settings_items):
     return backend.to_excel(_result, list(keys), dict(settings_items))
@@ -744,7 +940,7 @@ def excel_bytes(_result, fkey, wkey, ckey, keys, settings_items):
 
 with T_DL:
     next_step("dl")
-    head("Step 4", "Download your plan",
+    head("Step 5", "Download your plan",
          "Choose the plan or plans you want. You'll get one Excel file with who goes where, the clubs "
          "without a speaker, and the settings that were used.")
     if not ready:

@@ -4,15 +4,25 @@ A web page where staff upload the club, professor and lecture spreadsheets (Exce
 and get several matching plans side by side (Recommended first, then Best fit, Most clubs served and Balanced),
 a data check, and Excel downloads.
 
+## Tabs
+
+**Start here** (what to have ready, and how it works), **1 · Upload sheets**, **2 · Adjust priorities**,
+**3 · Compare plans** (plans side by side, with the better figure on each line highlighted and a
+"Why Recommended?" box), **4 · Dashboard** (charts comparing the plans, plus one plan in detail),
+**5 · Download** (choose which plans go in the Excel file).
+
 ## Priorities
 
-The **2 · Adjust priorities** tab has quick choices (Standard, Bigger clubs first, Most engaged clubs,
-Clubs' wishes first, Share the faculty, No seniority boost) and seven controls set in
-plain levels: Off, Low, Standard, High, Max. Every plan recalculates as soon as a
-control moves. Each plan card shows how its numbers moved from standard settings and how
-many clubs changed. **Save my settings** downloads them as a file, and **Load saved settings**
-restores them (an old weights.json also works). Every Excel download includes a
-"Settings used" sheet. Priorities and column choices are saved together.
+The **2 · Adjust priorities** tab has quick choices (Standard, Big clubs first, Active clubs first,
+Clubs' wishes first, Fresh faces, Share the faculty, Keep our picks) and controls set in plain
+levels: Off, Low, Standard, High, Max. They are grouped as *Which clubs come first* (Bigger clubs
+first, Most active clubs first), *What makes a good match* (Respect clubs' rankings, Senior
+speakers, and, once the engine supports them, Exact talk requested, Easy to schedule, Preferred
+talk format, Agree with our team's picks) and *Fairness* (Avoid repeat speakers, Share talks across
+faculty, Honour travel wishes). Each has a **What does this do?** link with a plain explanation.
+Every plan recalculates as soon as a control moves. The **Save or reuse settings** sub-tab
+downloads them as a file and loads them back (an old weights.json also works). Every Excel
+download includes a "Settings used" sheet. Priorities and column choices are saved together.
 
 ## Spreadsheet columns
 

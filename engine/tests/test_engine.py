@@ -146,6 +146,32 @@ class TestInputs(unittest.TestCase):
         self.assertFalse(flat["score"].equals(normal["score"]))
 
 
+class TestWeights(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.data = load_inputs(*FILES)
+
+    def test_every_weight_is_documented(self):
+        from engine import WEIGHT_INFO
+        from dataclasses import fields
+        self.assertEqual(set(WEIGHT_INFO), {f.name for f in fields(Weights)})
+        for info in WEIGHT_INFO.values():
+            self.assertTrue(info["label"] and info["help"] and info["group"] and info["applies_to"])
+
+    def test_staff_pick_bonus_pulls_plans_towards_staff(self):
+        base = run_plans(self.data, None, ["best_fit"])["best_fit"].summary["staff_pick_agreement"]
+        bonus = run_plans(self.data, {"staff_pick": 3}, ["best_fit"])["best_fit"].summary["staff_pick_agreement"]
+        self.assertGreater(bonus, base)
+
+    def test_content_dials_change_scores_but_never_the_rules(self):
+        for dial in ("lecture_match", "theme_match", "month_overlap", "format_match"):
+            plan = run_plans(self.data, {dial: 0}, ["best_fit"])["best_fit"]
+            self.assertEqual(plan.summary["clubs_matched"], 40, dial)
+        zero = {k: 0 for k in ("lecture_match", "theme_match", "month_overlap", "format_match")}
+        for plan in run_plans(self.data, zero).values():
+            self.assertEqual(plan.summary["clubs_matched"], 40)
+
+
 class TestSolver(unittest.TestCase):
     def test_matches_brute_force(self):
         rng = random.Random(7)

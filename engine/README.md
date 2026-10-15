@@ -57,7 +57,7 @@ The new plan shows up automatically in `MODES`, on the command line and in the a
 
 ## Tests
 
-`make test` runs 22 checks. They cover the parsing fixes, the hard rules in every
+`make test` runs 26 checks. They cover the parsing fixes, the hard rules in every
 plan, the tradeoffs each plan promises, messy and uploaded inputs, renamed,
 shuffled and extra columns (which must give identical plans), and the solver
 against brute force on random problems.

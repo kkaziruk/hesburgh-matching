@@ -8,7 +8,10 @@ so the numbers stay familiar:
              +  5 per shared theme
              +  2 per shared month
              +  1 per shared talk format
+             + 10 if staff already picked this professor (off by default)
     score    = points x club priority x title boost
+
+Every number above has a dial in `Weights` (see WEIGHT_INFO for plain-English help).
 
 with three corrections: a club's 1st choice counts more than its 5th, a
 lecture counts only when it is offered in a month both sides are free, and
@@ -34,20 +37,27 @@ SIZE_VALUE = {"AA": 1.00, "A": 0.90, "B": 0.80, "C": 0.70, "D": 0.60, "E": 0.50,
 ENGAGEMENT_BANDS = ((600, 1.00), (450, 0.90), (350, 0.80), (250, 0.70), (150, 0.60), (0, 0.55))
 UNKNOWN = 0.5                     # size or engagement left blank
 TITLE_BOOST_FROM_PRIORITY = 0.7   # only high-priority clubs get the title boost
+MIN_POINTS = 0.01
 
 
 # ------------------------------------------------------------------ weights
 
 @dataclass
 class Weights:
-    """Dials staff can turn. 1 = default, 0 = ignore the factor, 2 = double it."""
+    """Dials staff can turn. 1 = default, 0 = ignore the factor, 2 = double it.
+    WEIGHT_INFO below explains each one in plain English."""
+    lecture_match: float = 1.0
+    theme_match: float = 1.0
+    month_overlap: float = 1.0
+    format_match: float = 1.0
+    choice_rank: float = 1.0
     size: float = 1.0
     engagement: float = 1.0
     title: float = 1.0
-    choice_rank: float = 1.0
-    repeat_penalty: float = 1.0   # Balanced
-    spread: float = 1.0           # Balanced
-    travel_bonus: float = 1.0     # Balanced
+    repeat_penalty: float = 1.0
+    spread: float = 1.0
+    travel_bonus: float = 1.0
+    staff_pick: float = 0.0
 
     _OLD_NAMES = {"size_weight": "size", "eng_weight": "engagement", "title_weight": "title"}
 
@@ -71,6 +81,71 @@ class Weights:
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+
+ALL_PLANS = "All plans"
+FAIRNESS_PLANS = "Recommended and Balanced"
+
+WEIGHT_INFO = {
+    "lecture_match": dict(
+        label="Requested lecture",
+        help="Points when the professor gives a lecture the club asked for by name (10 each at 1x). "
+             "Raise it to favour exact talks over loose theme matches.",
+        group="What the club asked for", applies_to=ALL_PLANS),
+    "theme_match": dict(
+        label="Shared theme",
+        help="Points when the professor covers a theme the club asked for, even without the exact talk "
+             "(5 each at 1x).",
+        group="What the club asked for", applies_to=ALL_PLANS),
+    "choice_rank": dict(
+        label="Respect club's ranking",
+        help="How much a club's 1st choice beats its 5th. At 1x each step down the list is worth 10% less; "
+             "0 treats all five choices the same.",
+        group="What the club asked for", applies_to=ALL_PLANS),
+    "month_overlap": dict(
+        label="Calendar flexibility",
+        help="Points for each month both sides are free (2 each at 1x). More shared months make "
+             "scheduling easier. One shared month is always required.",
+        group="Logistics", applies_to=ALL_PLANS),
+    "format_match": dict(
+        label="Talk format",
+        help="Points when the professor offers the format the club wants, such as a fireside chat "
+             "(1 each at 1x).",
+        group="Logistics", applies_to=ALL_PLANS),
+    "size": dict(
+        label="Club size",
+        help="How much bigger clubs (AA, A) are favoured over smaller ones (E, F). 0 treats every size alike.",
+        group="Which clubs come first", applies_to=ALL_PLANS + " except Most clubs served"),
+    "engagement": dict(
+        label="Club engagement",
+        help="How much clubs with a high HLS Score are favoured. 0 ignores engagement.",
+        group="Which clubs come first", applies_to=ALL_PLANS + " except Most clubs served"),
+    "title": dict(
+        label="Senior speakers for top clubs",
+        help="Boost for deans, provosts and directors when matched with high-priority clubs "
+             "(up to 1.3x at 1x). 0 treats every title alike.",
+        group="Which clubs come first", applies_to=ALL_PLANS),
+    "repeat_penalty": dict(
+        label="Avoid repeat speakers",
+        help="Penalty for sending a professor who spoke at this club in the last four years.",
+        group="Fairness", applies_to=FAIRNESS_PLANS),
+    "spread": dict(
+        label="Spread events across faculty",
+        help="Makes a professor's 2nd and 3rd events cost more, so more faculty take part. "
+             "0 lets the best professors take every slot they offered.",
+        group="Fairness", applies_to=FAIRNESS_PLANS),
+    "travel_bonus": dict(
+        label="Honour travel wishes",
+        help="Bonus when a professor asked to visit the club's city or region.",
+        group="Fairness", applies_to=FAIRNESS_PLANS),
+    "staff_pick": dict(
+        label="Agree with staff's picks",
+        help="Bonus when the professor is the one already in the club's '2026 Assignment' column "
+             "(10 points at 1x). Off by default so the plans stay an independent second opinion.",
+        group="Fairness", applies_to=ALL_PLANS),
+}
+for _key, _info in WEIGHT_INFO.items():
+    _info.update(default=Weights.__dataclass_fields__[_key].default, min=0.0, max=3.0 if _key != "staff_pick" else 5.0)
 
 
 # ------------------------------------------------------------------ club and professor factors
@@ -139,10 +214,7 @@ class Pair:
     score: float                        # fit x club priority x title boost
     repeat: bool                        # professor already spoke here 2022-2025
     travel: bool                        # professor asked to visit this area
-
-    @property
-    def allowed(self) -> bool:
-        return self.score > 0
+    allowed: bool = False               # shares a month and a requested theme or lecture
 
     @property
     def first_choice_lecture(self) -> bool:
@@ -188,17 +260,20 @@ def score_pair(club: Club, prof: Professor, w: Weights) -> Pair:
     fit = 0.0
     score = 0.0
     if allowed:
-        fit = (sum(10 * choice_factor(r, w) for r, _ in lectures)
-               + 5 * len(themes) * choice_factor(rank, w)
-               + 2 * len(months)
-               + 1 * len(formats))
+        staff_choice = bool(club.staff_pick) and same_person(club.staff_pick, prof.name)
+        fit = (10 * w.lecture_match * sum(choice_factor(r, w) for r, _ in lectures)
+               + 5 * w.theme_match * len(themes) * choice_factor(rank, w)
+               + 2 * w.month_overlap * len(months)
+               + 1 * w.format_match * len(formats)
+               + 10 * w.staff_pick * staff_choice)
+        fit = max(fit, MIN_POINTS)      # an allowed pair is always worth something, even with dials at 0
         priority = club_priority(club, w)
         boost = title_boost(prof, w) if priority >= TITLE_BOOST_FROM_PRIORITY else 1.0
         score = fit * priority * boost
 
     return Pair(club, prof, months, themes, lectures, formats, rank, fit, score,
                 repeat=any(same_person(prof.name, s) for s in club.past_speakers),
-                travel=wants_to_visit(prof, club))
+                travel=wants_to_visit(prof, club), allowed=allowed)
 
 
 class PairGrid:

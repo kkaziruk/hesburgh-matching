@@ -9,7 +9,7 @@ runs in about a second). No scipy, networkx or matplotlib.
 
 ```python
 from engine import load_inputs, data_issues, run_plans, compare_plans, Weights
-from engine import detect_columns, COLUMN_SPEC, MODES, SUMMARY_LABELS
+from engine import detect_columns, COLUMN_SPEC, MODES, SUMMARY_LABELS, WEIGHT_INFO
 
 data   = load_inputs(club_csv, prof_csv, lecture_csv)   # paths or file-like (BytesIO / Streamlit UploadedFile)
 issues = data_issues(data)                              # list[dict]
@@ -77,17 +77,32 @@ Sorted errors first.
 `"legacy_greedy"` (the old algorithm on the cleaned data, for comparison only).
 Dict order follows `modes`.
 
-`weights` is a `Weights` or a plain dict with any of these keys (defaults shown):
+`weights` is a `Weights` or a plain dict with any of these keys. Every key defaults to 1.0
+except `staff_pick`, which defaults to 0. 0 means ignore and 2 means double. Every key
+applies to all plans unless noted.
 
-| key | default | meaning |
+| key | label (from WEIGHT_INFO) | what it scales |
 |---|---|---|
-| `size` | 1.0 | how much club size counts in club priority (0 = ignore) |
-| `engagement` | 1.0 | how much HLS engagement counts in club priority (0 = ignore) |
-| `title` | 1.0 | strength of the professor-title boost (0 = no boost, 2 = double) |
-| `choice_rank` | 1.0 | how much a club's 1st-choice request beats its 5th (0 = all equal) |
-| `repeat_penalty` | 1.0 | Balanced only: penalty for a speaker the club had in 2022-2025 |
-| `spread` | 1.0 | Balanced only: penalty for giving one professor several events |
-| `travel_bonus` | 1.0 | Balanced only: bonus when the club is in a professor's preferred area |
+| `lecture_match` | Requested lecture | 10 points per requested lecture the professor gives |
+| `theme_match` | Shared theme | 5 points per requested theme the professor covers |
+| `choice_rank` | Respect club's ranking | 10% drop per step down the club's Theme 1-5 list |
+| `month_overlap` | Calendar flexibility | 2 points per shared month |
+| `format_match` | Talk format | 1 point per shared talk format |
+| `size` | Club size | club size share of priority (not used by Most clubs served) |
+| `engagement` | Club engagement | HLS Score share of priority (not used by Most clubs served) |
+| `title` | Senior speakers for top clubs | title boost, up to x1.3 |
+| `repeat_penalty` | Avoid repeat speakers | Recommended and Balanced only |
+| `spread` | Spread events across faculty | Recommended and Balanced only: cost of 2nd and 3rd events |
+| `travel_bonus` | Honour travel wishes | Recommended and Balanced only |
+| `staff_pick` | Agree with staff's picks | 10 points when the professor equals the club's "2026 Assignment". Defaults to 0 so plans stay an independent second opinion. In Recommended it only breaks ties, because clubs' own rankings come first. |
+
+`WEIGHT_INFO` (exported) is `{key: {label, help, group, applies_to, default, min, max}}`.
+Use it to build the sliders and their "?" help text. `group` is one of "What the club
+asked for", "Logistics", "Which clubs come first" or "Fairness". Sliders run from 0 to 3
+(0 to 5 for staff_pick).
+
+No dial can break the hard rules. Even with every content dial at 0, an allowed pair keeps a
+tiny positive worth, so plans still serve every club they can.
 
 These are multipliers on the real per-club and per-professor values. They never
 replace them (the old weights.json bug). `Weights.from_json(path)` reads a
