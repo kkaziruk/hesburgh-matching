@@ -1367,14 +1367,13 @@ const SAMPLE = null;
   const presetLevels = (name) => Object.assign({}, STANDARD_LEVELS, PRESETS[name] || {});
   const matchingPreset = (lv) => Object.keys(PRESETS).find((n) => Object.entries(presetLevels(n)).every(([k, v]) => lv[k] === v)) || null;
 
-  const PLAN_ORDER = ["recommended", "most_clubs", "top_choices", "best_fit", "balanced", "legacy_greedy"];
+  const PLAN_ORDER = ["recommended", "most_clubs", "top_choices", "best_fit", "balanced"];
   const BLURB = {
     recommended: "Gives the most clubs a speaker, then each club the talk it ranked highest, with no repeat speakers and talks shared fairly.",
     most_clubs: "Gives the most clubs a speaker, and treats every club the same whatever its size.",
     top_choices: "Gives as many clubs as possible the exact talk they ranked first.",
     best_fit: "The strongest overall fit, favouring big, active clubs.",
     balanced: "Shares talks across more faculty, avoids repeat speakers, and sends professors where they asked to go.",
-    legacy_greedy: "The old spreadsheet method, kept for comparison.",
   };
   // The measures plans are compared on: summary key, label, higher is better, short "best for" name.
   const MEASURES = [
@@ -1394,7 +1393,7 @@ const SAMPLE = null;
   const saved = store.get("opts", {});
   const state = {
     files: { club: null, prof: null, lecture: null }, names: {}, usingSample: false, columns: { club: {}, prof: {}, lecture: {} },
-    opts: { plan: Engine.MODES[saved.plan] ? saved.plan : DEFAULTS.plan, levels: Object.assign({}, STANDARD_LEVELS, saved.levels || {}) },
+    opts: { plan: PLAN_ORDER.includes(saved.plan) ? saved.plan : DEFAULTS.plan, levels: Object.assign({}, STANDARD_LEVELS, saved.levels || {}) },
     pins: [], step: "home", view: "clubs", q: "", sel: null, selProf: null, result: null, uploadMsg: null,
     setTab: "prio", planView: "cards", issueView: "all", resTab: "month", example: null,
   };
@@ -1578,7 +1577,7 @@ const SAMPLE = null;
     if (!top) return "";
     const lines = [];
     for (const other of plans) {
-      if (other === top || other.key === "legacy_greedy") continue;
+      if (other === top) continue;
       const gains = [], costs = [];
       for (const [k, , higher] of MEASURES) {
         const d = top.summary[k] - other.summary[k];
@@ -2090,7 +2089,7 @@ const SAMPLE = null;
       state.opts.levels = doc.levels && typeof doc.levels === "object"
         ? Object.assign({}, STANDARD_LEVELS, Object.fromEntries(Object.entries(doc.levels).filter(([k, v]) => PRIORITY[k] && LEVELS.includes(v))))
         : levelsFrom(Object.assign(weightsFrom(STANDARD_LEVELS), w));
-      if (doc.plan && Engine.MODES[doc.plan]) state.opts.plan = doc.plan;
+      if (PLAN_ORDER.includes(doc.plan)) state.opts.plan = doc.plan;
       if (doc.columns && typeof doc.columns === "object") state.columns = Object.assign({ club: {}, prof: {}, lecture: {} }, doc.columns);
       rerun();
       toast(`Loaded settings from ${file.name}`);
