@@ -65,8 +65,9 @@ def _to_path(f, tmpdir: str, name: str) -> str:
     """Accept a path or a file-like upload; return a path on disk."""
     if f is None:
         raise ValueError(f"{name} is missing")
-    if isinstance(f, (str, os.PathLike)):
+    if isinstance(f, (str, os.PathLike)) and not str(f).lower().endswith((".xlsx", ".xls")):
         return str(f)
+    f = _rewind(f)
     data = f.getvalue() if hasattr(f, "getvalue") else f.read()
     p = Path(tmpdir) / name
     p.write_bytes(data)
@@ -135,8 +136,15 @@ ORDINAL = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 5: "5th"}
 
 
 def _rewind(f):
+    """Rewind uploads, and turn an Excel upload into CSV so the engine reads it like any export."""
     if hasattr(f, "seek"):
         f.seek(0)
+    name = str(getattr(f, "name", f)).lower()
+    if name.endswith((".xlsx", ".xls")):
+        df = pd.read_excel(f, dtype=str, keep_default_na=False)
+        buf = io.BytesIO(df.to_csv(index=False).encode("utf-8"))
+        buf.name = Path(name).stem + ".csv"
+        return buf
     return f
 
 
