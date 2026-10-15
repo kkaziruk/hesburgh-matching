@@ -12,10 +12,11 @@ import streamlit as st
 import backend
 
 ROOT = Path(__file__).resolve().parent.parent
-GOLD = "#C99700"
-NAVY = "#0C2340"
-INK = "#1B1B1B"
-PAPER = "#F3F2EE"
+GOLD = "#C99700"        # Notre Dame gold
+GOLD_DARK = "#8C6A00"   # gold dark enough for text on white
+NAVY = "#0C2340"        # Notre Dame navy
+PAPER = "#F6F7F9"
+LINE = "#DDE1E8"
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 st.set_page_config(page_title="Hesburgh Lecture Matching", page_icon="🎓", layout="wide",
@@ -126,71 +127,77 @@ if "preset" not in st.session_state:
 # ============================================================================ Styles
 st.markdown(f"""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap');
   .stApp, .stApp :is(p, label, input, textarea, button, li, td, th, div) {{
-      font-family: 'Inter', system-ui, sans-serif; }}
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }}
   [data-testid="stAppViewContainer"] {{ background: {PAPER}; }}
   [data-testid="stHeader"], [data-testid="stSidebarCollapsedControl"], [data-testid="stToolbar"] {{ display: none; }}
-  .block-container {{ padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1320px; }}
+  .block-container {{ padding-top: 0; padding-bottom: 3rem; max-width: 1280px; }}
 
-  /* top bar */
-  .topbar {{ display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-             padding: .2rem 0 .9rem 0; border-bottom: 1px solid #1b1b1b1f; margin-bottom: .2rem; }}
-  .brand {{ display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }}
-  .brand .mark {{ font-family: 'Instrument Serif', serif !important; font-size: 1.9rem; line-height: 1; color: {INK}; }}
-  .brand .mark i {{ color: {GOLD}; font-style: italic; }}
-  .brand .tag {{ font-family: 'JetBrains Mono', monospace !important; font-size: .75rem; color: #6b675d; }}
+  /* header band */
+  .band {{ background: {NAVY}; margin: -1rem -100vw 0 -100vw; padding: 1.15rem 100vw 1.05rem 100vw;
+           border-bottom: 4px solid {GOLD}; }}
+  .band-inner {{ display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }}
+  .brand .over {{ color: {GOLD}; font-size: .72rem; font-weight: 600; letter-spacing: .14em;
+                  text-transform: uppercase; }}
+  .brand .mark {{ font-family: 'Source Serif 4', Georgia, serif !important; color: #fff; font-size: 1.65rem;
+                  font-weight: 700; line-height: 1.15; }}
   .status {{ display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }}
-  .pill {{ font-family: 'JetBrains Mono', monospace !important; font-size: .74rem; border: 1px solid #1b1b1b26;
-           border-radius: 99px; padding: .18rem .65rem; background: #fffdf8; color: {INK}; white-space: nowrap; }}
-  .pill.err {{ background: #fdecea; border-color: #e9b4ae; color: #8c1d18; }}
-  .pill.warn {{ background: #fff4d6; border-color: #e8d29a; color: #6b5200; }}
-  .pill.ok {{ background: #e7f2ea; border-color: #b6d8c0; color: #1e5b33; }}
+  .pill {{ font-size: .76rem; font-weight: 500; border-radius: 99px; padding: .22rem .7rem; white-space: nowrap;
+           background: rgba(255,255,255,.10); color: #e6ebf2; border: 1px solid rgba(255,255,255,.18); }}
+  .pill.err {{ background: #fbe3e1; color: #8c1d18; border-color: #fbe3e1; }}
+  .pill.warn {{ background: #fdf3d6; color: #6b5200; border-color: #fdf3d6; }}
+  .pill.ok {{ background: #e3f1e7; color: #1e5b33; border-color: #e3f1e7; }}
 
-  /* main tabs styled as a numbered nav */
-  div[data-testid="stTabs"] div[role="tablist"] {{ gap: 1.6rem; }}
-  div[data-testid="stTabs"] button[role="tab"] p {{ font-family: 'JetBrains Mono', monospace !important;
-           font-size: .86rem; letter-spacing: .01em; color: #6b675d; }}
-  div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p {{ color: {INK}; font-weight: 600; }}
-  div[data-baseweb="tab-highlight"] {{ background-color: {INK}; }}
+  /* main tabs */
+  div[data-testid="stTabs"] div[role="tablist"] {{ gap: 1.8rem; }}
+  div[data-testid="stTabs"] button[role="tab"] p {{ font-size: .95rem; font-weight: 500; color: #5a6475; }}
+  div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p {{ color: {NAVY}; font-weight: 600; }}
+  div[data-baseweb="tab-highlight"] {{ background-color: {GOLD}; height: 3px; }}
 
   /* section headers */
-  .kicker {{ font-family: 'JetBrains Mono', monospace !important; font-size: .75rem; color: #8a8576;
-             letter-spacing: .06em; text-transform: uppercase; margin: 1.1rem 0 .15rem 0; }}
-  .h {{ font-family: 'Instrument Serif', serif !important; font-size: 2.3rem; line-height: 1.05; color: {INK};
-        margin: 0 0 .35rem 0; }}
-  .h i {{ color: {GOLD}; }}
-  .lead {{ color: #4a473f; font-size: 1.0rem; max-width: 780px; margin-bottom: 1rem; }}
+  .kicker {{ color: {GOLD_DARK}; font-size: .74rem; font-weight: 700; letter-spacing: .12em;
+             text-transform: uppercase; margin: 1.3rem 0 .2rem 0; }}
+  .h {{ font-family: 'Source Serif 4', Georgia, serif !important; font-size: 1.85rem; font-weight: 700;
+        line-height: 1.15; color: {NAVY}; margin: 0 0 .35rem 0; }}
+  .lead {{ color: #4a5468; font-size: .98rem; max-width: 820px; margin-bottom: 1rem; line-height: 1.55; }}
 
-  /* hero */
-  .hero {{ padding: 2rem 0 1.4rem 0; }}
-  .hero .big {{ font-family: 'Instrument Serif', serif !important; font-size: 4.2rem; line-height: .98; color: {INK};
-                letter-spacing: -.01em; }}
-  .hero .big i {{ color: {GOLD}; }}
-  .hero .sub {{ font-family: 'JetBrains Mono', monospace !important; color: #6b675d; margin-top: .8rem; font-size: .9rem; }}
+  /* intro */
+  .intro {{ display: grid; grid-template-columns: 1.4fr 1fr; gap: 2rem; align-items: center; padding: 1.6rem 0 .6rem 0; }}
+  .intro .big {{ font-family: 'Source Serif 4', Georgia, serif !important; font-size: 2.5rem; font-weight: 700;
+                 line-height: 1.12; color: {NAVY}; }}
+  .intro .sub {{ color: #4a5468; margin-top: .7rem; font-size: 1.02rem; line-height: 1.6; }}
+  .facts {{ background: #fff; border: 1px solid {LINE}; border-left: 4px solid {GOLD}; border-radius: 10px;
+            padding: 1rem 1.2rem; }}
+  .facts div {{ display: flex; justify-content: space-between; padding: .3rem 0; font-size: .92rem; color: #3a4456; }}
+  .facts b {{ color: {NAVY}; }}
+  @media (max-width: 900px) {{ .intro {{ grid-template-columns: 1fr; }} .intro .big {{ font-size: 2rem; }} }}
 
   /* cards */
-  .card {{ background: #fffdf8; border: 1px solid #1b1b1b1a; border-radius: 16px; padding: 1.1rem 1.25rem;
-           height: 100%; transition: transform .15s ease, box-shadow .15s ease; }}
-  .card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(27,27,27,.07); }}
-  .card .num {{ font-family: 'JetBrains Mono', monospace !important; font-size: .74rem; color: #8a8576; }}
-  .card .t {{ font-family: 'Instrument Serif', serif !important; font-weight: 400; font-size: 1.6rem; margin: .1rem 0 .3rem 0;
-              color: {INK}; line-height: 1.1; padding: 0; }}
-  .card .blurb {{ color: #5b574d; font-size: .86rem; line-height: 1.45; min-height: 7.4em; margin-bottom: .6rem; }}
-  .card .changed {{ font-family: 'JetBrains Mono', monospace !important; font-size: .72rem; color: #7a5f00;
-                    background: #fbf1cf; border-radius: 6px; padding: .15rem .45rem; display: inline-block;
-                    margin-bottom: .5rem; }}
-  .stat {{ display: flex; justify-content: space-between; align-items: baseline; padding: .32rem 0;
-           border-top: 1px dashed #1b1b1b1f; font-size: .86rem; gap: .5rem; color: #3b3830; }}
-  .stat b {{ font-family: 'JetBrains Mono', monospace !important; font-weight: 600; color: {INK}; white-space: nowrap; }}
-  .stat b.best {{ color: {GOLD}; }}
-  .d {{ font-family: 'JetBrains Mono', monospace !important; font-size: .68rem; font-weight: 600; margin-left: .3rem; }}
+  .card {{ background: #fff; border: 1px solid {LINE}; border-radius: 10px; padding: 1.05rem 1.2rem; height: 100%;
+           box-shadow: 0 1px 2px rgba(12,35,64,.04); }}
+  .card.rec {{ border: 2px solid {GOLD}; box-shadow: 0 4px 16px rgba(201,151,0,.12); }}
+  .card .num {{ display: inline-flex; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem;
+                border-radius: 50%; background: {NAVY}; color: #fff; font-size: .78rem; font-weight: 600; }}
+  .card .badge {{ display: inline-block; background: {GOLD}; color: #fff; font-size: .68rem; font-weight: 700;
+                  letter-spacing: .08em; text-transform: uppercase; border-radius: 4px; padding: .12rem .45rem;
+                  margin-left: .4rem; vertical-align: middle; }}
+  .card .t {{ font-family: 'Source Serif 4', Georgia, serif !important; font-weight: 700; font-size: 1.22rem;
+              margin: .45rem 0 .3rem 0; color: {NAVY}; line-height: 1.2; }}
+  .card .blurb {{ color: #5a6475; font-size: .86rem; line-height: 1.5; min-height: 7.6em; margin-bottom: .6rem; }}
+  .card .changed {{ font-size: .74rem; font-weight: 600; color: #6b5200; background: #fdf3d6; border-radius: 4px;
+                    padding: .15rem .45rem; display: inline-block; margin-bottom: .5rem; }}
+  .stat {{ display: flex; justify-content: space-between; align-items: baseline; padding: .34rem 0;
+           border-top: 1px solid #eef0f4; font-size: .86rem; gap: .5rem; color: #3a4456; }}
+  .stat b {{ font-weight: 600; color: {NAVY}; white-space: nowrap; font-variant-numeric: tabular-nums; }}
+  .stat b.best {{ color: {GOLD_DARK}; }}
+  .stat b.best::before {{ content: "★ "; font-size: .72rem; }}
+  .d {{ font-size: .7rem; font-weight: 600; margin-left: .3rem; }}
   .d.good {{ color: #1e7b3c; }} .d.bad {{ color: #b3261e; }}
-  .step-card p {{ color: #5b574d; font-size: .9rem; line-height: 1.5; margin: .2rem 0 0 0; }}
-  .arrow {{ font-family: 'JetBrains Mono', monospace !important; color: {GOLD}; }}
-  .small {{ font-family: 'JetBrains Mono', monospace !important; font-size: .74rem; color: #8a8576; margin-bottom: .4rem; }}
-  .stButton > button, .stDownloadButton > button {{ border-radius: 99px; font-weight: 500; }}
-  @media (max-width: 800px) {{ .hero .big {{ font-size: 2.8rem; }} .h {{ font-size: 1.9rem; }} }}
+  .step-card p {{ color: #5a6475; font-size: .9rem; line-height: 1.55; margin: .2rem 0 0 0; }}
+  .small {{ font-size: .8rem; color: #6b7486; margin-bottom: .4rem; }}
+  .stButton > button, .stDownloadButton > button {{ border-radius: 6px; font-weight: 600; }}
+  div[data-testid="stMetricValue"] {{ color: {NAVY}; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -275,58 +282,70 @@ if result is not None:
     n_err, n_warn = int((sev == "error").sum()), int((sev == "warning").sum())
     pills += [f'<span class="pill">{result.n_clubs} clubs</span>',
               f'<span class="pill">{result.n_profs} professors</span>']
-    pills.append(f'<span class="pill err">{n_err} to fix</span>' if n_err else '<span class="pill ok">data ok</span>')
+    pills.append(f'<span class="pill err">{n_err} to fix</span>' if n_err else '<span class="pill ok">Data OK</span>')
     if n_warn:
         pills.append(f'<span class="pill warn">{n_warn} warnings</span>')
     if ENGINE:
-        pills.append(f'<span class="pill">settings: {st.session_state.get("preset") or "custom"}</span>')
+        pills.append(f'<span class="pill">Settings: {st.session_state.get("preset") or "Custom"}</span>')
 elif gaps or load_error:
-    pills.append('<span class="pill err">needs attention · see Your data</span>')
+    pills.append('<span class="pill err">Needs attention: see Your data</span>')
 else:
-    pills.append('<span class="pill warn">waiting for sheets</span>')
+    pills.append('<span class="pill warn">Waiting for sheets</span>')
 
 st.markdown(f"""
-<div class="topbar">
-  <div class="brand"><span class="mark">Hesburgh <i>Lecture</i> Matching</span>
-       <span class="tag">notre dame alumni association</span></div>
+<div class="band"><div class="band-inner">
+  <div class="brand"><div class="over">Notre Dame Alumni Association</div>
+       <div class="mark">Hesburgh Lecture Series · Speaker Matching</div></div>
   <div class="status">{''.join(pills)}</div>
-</div>""", unsafe_allow_html=True)
+</div></div>""", unsafe_allow_html=True)
 
 T_HOW, T_DATA, T_SET, T_PLANS, T_DL = st.tabs(
-    ["01  How it works", "02  Your data", "03  Settings", "04  Plans", "05  Download"])
+    ["How it works", "1 · Your data", "2 · Settings", "3 · Plans", "4 · Download"])
 
 # ============================================================================ 01 How it works
 with T_HOW:
-    st.markdown("""
-<div class="hero">
-  <div class="big">Every club, the <i>right</i> speaker.</div>
-  <div class="sub">Upload three sheets. Tune what matters. Compare plans. Download the one you like.</div>
+    facts = ""
+    if result is not None:
+        rec = next(iter(result.plans.values()), None)
+        facts = (f'<div><span>Clubs in this year\'s sheets</span><b>{result.n_clubs}</b></div>'
+                 f'<div><span>Participating professors</span><b>{result.n_profs}</b></div>'
+                 + (f'<div><span>Clubs matched ({rec.label})</span><b>{rec.summary.get("Clubs matched", "—")}</b></div>'
+                    if rec else ""))
+        facts = f'<div class="facts">{facts}</div>'
+    st.markdown(f"""
+<div class="intro">
+  <div><div class="big">Pair every alumni club with the right Notre Dame speaker.</div>
+       <div class="sub">Upload this year's club, professor and lecture sheets. The app checks the data, builds
+       several complete matching plans, explains every match, and exports the plan you choose to Excel.</div></div>
+  {facts}
 </div>""", unsafe_allow_html=True)
 
     steps = [
-        ("02", "Your data", "Drop in club_info, prof_info and lecture_info. The app checks them and tells you "
+        ("1", "Your data", "Drop in club_info, prof_info and lecture_info. The app checks them and tells you "
                             "what to fix before anything is matched."),
-        ("03", "Settings", "Pick a preset or move the sliders: club size, engagement, clubs' choices, seniority, "
+        ("2", "Settings", "Pick a preset or move the sliders: club size, engagement, clubs' choices, seniority, "
                            "repeat speakers. Plans update instantly."),
-        ("04", "Plans", "Several plans side by side. Every match comes with the reason behind it, and every "
+        ("3", "Plans", "Several plans side by side. Every match comes with the reason behind it, and every "
                         "unmatched club with why and who came closest."),
-        ("05", "Download", "Pick the plans you want and get one Excel file, with the settings recorded inside."),
+        ("4", "Download", "Pick the plans you want and get one Excel file, with the settings recorded inside."),
     ]
     for c, (n, t, body) in zip(st.columns(4, gap="medium"), steps):
-        c.markdown(f'<div class="card step-card"><div class="num">{n} <span class="arrow">↗</span></div>'
+        c.markdown(f'<div class="card step-card"><div class="num">{n}</div>'
                    f'<div class="t">{t}</div><p>{body}</p></div>', unsafe_allow_html=True)
 
     modes = list(result.plans.values()) if result is not None else []
     WORDS = {2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
-    head("The plans", f"{WORDS.get(len(modes), 'Several')} ways to <i>match</i>",
+    head("The plans", f"{WORDS.get(len(modes), 'Several')} ways to match",
          "Every plan follows the same hard rules: one speaker per club, no professor over their event limit, "
          "and a match needs a shared month and a shared topic. They differ in what they reward.")
     if modes:
         for i, (c, p) in enumerate(zip(st.columns(len(modes), gap="medium"), modes), 1):
-            c.markdown(f'<div class="card"><div class="num">0{i}</div><div class="t">{p.label}</div>'
+            rec = i == 1 and p.key == "recommended"
+            c.markdown(f'<div class="card{" rec" if rec else ""}"><div class="num">{i}</div>'
+                       f'{"<span class=badge>Recommended</span>" if rec else ""}<div class="t">{p.label}</div>'
                        f'<div class="blurb" style="min-height:0">{p.blurb}</div></div>', unsafe_allow_html=True)
 
-    head("Good to know", "Questions staff <i>ask</i>")
+    head("Good to know", "Common questions")
     q1, q2 = st.columns(2, gap="large")
     with q1:
         with st.expander("What is the match score?"):
@@ -338,9 +357,10 @@ with T_HOW:
                      "months, no topic overlap, or every suitable professor already booked) and the three "
                      "closest professors.")
         with st.expander("Which plan should we use?"):
-            st.write("Start with Best fit. If it leans too hard on a few professors, look at Balanced. If "
-                     "clubs' wishes matter most, look at Clubs' top choices. Gold numbers on the Plans tab show "
-                     "which plan leads on each measure.")
+            st.write("Start with Recommended: it serves as many clubs as possible, then gives each the lecture "
+                     "it wanted most while avoiding repeat speakers and spreading events across faculty. Compare "
+                     "it with the others on the Plans tab, where a gold star marks the plan that leads on each "
+                     "measure.")
     with q2:
         with st.expander("Someone renamed a column. Will it break?"):
             st.write("New or reordered columns are fine, and small renames are recognised. If a required "
@@ -352,9 +372,9 @@ with T_HOW:
             st.write("Yes. Settings > Save or load downloads a small file. Load it next time to restore the "
                      "same priorities and column choices.")
 
-# ============================================================================ 02 Your data
+# ============================================================================ Your data
 with T_DATA:
-    head("Step 02", "Your <i>data</i>", "Upload this year's three sheets as CSV files.")
+    head("Step 1", "Your data", "Upload this year's three sheets as CSV files.")
     c1, c2, c3 = st.columns(3, gap="medium")
     c1.file_uploader("Club info", type="csv", key="up_club", help="club_info.csv")
     c2.file_uploader("Professor info", type="csv", key="up_prof", help="prof_info.csv")
@@ -372,7 +392,7 @@ with T_DATA:
         st.error(f"The sheets couldn't be read: {load_error}. Check that the right file is in each box.")
     elif gaps:
         st.error("Some required columns couldn't be found, probably because a heading changed. Open "
-                 "**03 Settings > Columns** and point each one at the right column:\n\n"
+                 "**Settings > Columns** and point each one at the right column:\n\n"
                  + "\n".join(f"- {g}" for g in gaps))
     elif result is not None:
         issues = result.issues
@@ -443,7 +463,7 @@ def columns_panel(det):
 
 
 with T_SET:
-    head("Step 03", "Your <i>settings</i>", "Changes apply to every plan straight away.")
+    head("Step 2", "Your settings", "Changes apply to every plan straight away.")
     if not ENGINE:
         if backend.ENGINE_ERROR:
             st.warning("The upgraded matching engine failed to load, so results use the original code. "
@@ -478,7 +498,7 @@ with T_SET:
             if detected:
                 columns_panel(detected)
             else:
-                st.info("Add the three sheets under 02 Your data to see their columns.")
+                st.info("Add the three sheets under Your data to see their columns.")
         with sub[2]:
             st.write("Save your priorities and column choices to a small file, and load it next time to pick "
                      "up exactly where you left off. An old weights.json also works.")
@@ -504,14 +524,14 @@ HIDE = {"Clubs total", "Professors total"}
 
 def not_ready_note():
     if not files:
-        st.info("Add the three sheets under **02 Your data** first.")
+        st.info("Add the three sheets under **Your data** first.")
     else:
-        st.warning("No plans yet. **02 Your data** explains what needs fixing.")
+        st.warning("No plans yet. **Your data** explains what needs fixing.")
 
 
 with T_PLANS:
-    head("Step 04", "Compare the <i>plans</i>",
-         "Gold marks the plan that leads on each measure." + (
+    head("Step 3", "Compare the plans",
+         "A gold star marks the plan that leads on each measure." + (
              " Small green and red numbers show the change from standard settings." if not is_standard else ""))
     if not ready:
         not_ready_note()
@@ -566,10 +586,12 @@ with T_PLANS:
                 n = len(changed_clubs(p))
                 badge = (f'<div class="changed">{n} club{"s" if n != 1 else ""} changed</div>' if n
                          else '<div class="changed">same as standard</div>')
-            col.markdown(f'<div class="card"><div class="num">0{i}</div><div class="t">{p.label}</div>'
+            rec = p.key == "recommended"
+            col.markdown(f'<div class="card{" rec" if rec else ""}"><div class="num">{i}</div>'
+                         f'{"<span class=badge>Recommended</span>" if rec else ""}<div class="t">{p.label}</div>'
                          f'<div class="blurb">{p.blurb}</div>{badge}{rows}</div>', unsafe_allow_html=True)
 
-        head("Look closer", "Inside a <i>plan</i>")
+        head("Look closer", "Inside a plan")
         labels = [p.label for p in plans]
         if st.session_state.get("plan_view") not in labels:
             st.session_state["plan_view"] = labels[0]
@@ -640,7 +662,7 @@ def excel_bytes(_result, fkey, wkey, ckey, keys, settings_items):
 
 
 with T_DL:
-    head("Step 05", "Take it <i>with you</i>",
+    head("Step 4", "Download your plans",
          "Pick the plans you want. You get one Excel file with a comparison sheet, the matches and unmatched "
          "clubs for each plan, the data check, and the settings used.")
     if not ready:
@@ -663,6 +685,6 @@ with T_DL:
             else:
                 st.info("Pick at least one plan.")
         st.caption(f"Settings in this file: {st.session_state.get('preset') or 'Custom'}. "
-                   "Not sure which plan? The 04 Plans tab shows each one in full.")
+                   "Not sure which plan? The Plans tab shows each one in full.")
     if result is not None and result.source != "engine":
         st.caption("Preview mode: running on the original matching code.")
