@@ -19,6 +19,7 @@ test:
 
 page:
 	@python3 web/build_page.py --no-sample
+	@mkdir -p docs && cp web/index.html docs/index.html  # docs/ is what GitHub Pages serves
 
 parity:
 	@node web/parity_check.js

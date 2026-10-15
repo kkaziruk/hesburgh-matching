@@ -33,7 +33,7 @@ column is a complete plan, with a gold ★ on the best result in each row). Pres
 **Settings** (top right) holds the same priorities, each with a "What does this
 do?" note, plus the spreadsheet column picker.
 
-The page is `web/index.html`. Files are read inside the browser and never uploaded,
+The page is `web/index.html`; `make page` also copies it to `docs/index.html`, which GitHub Pages serves (Settings → Pages → Deploy from branch → main, /docs). Files are read inside the browser and never uploaded,
 and the page contains no club or faculty data. The JavaScript in `web/engine.js` is a
 line-by-line copy of the Python engine below; `node web/parity_check.js` confirms
 both give identical plans on the real files.
