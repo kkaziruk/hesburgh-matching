@@ -38,7 +38,8 @@ def build(out, with_sample=True):
     page = open(os.path.join(HERE, "page_template.html"), encoding="utf-8").read()
     engine = open(os.path.join(HERE, "engine.js"), encoding="utf-8").read()
     blob = json.dumps(sample).replace("</", "<\\/")
-    page = page.replace("/*ENGINE*/", engine).replace("/*SAMPLE*/", blob)
+    states = open(os.path.join(HERE, "us_states.json"), encoding="utf-8").read().strip()
+    page = page.replace("/*ENGINE*/", engine).replace("/*SAMPLE*/", blob).replace("/*STATES*/", states)
     if not with_sample:
         # A plain web page (GitHub Pages) needs its own document skeleton; the artifact host adds one.
         page = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'

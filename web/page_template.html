@@ -379,6 +379,21 @@ table.issues td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertic
   .dlrow { grid-template-columns: minmax(0, 1fr); }
   .kpis .stat b { font-size: 20px; }
 }
+/* ---------- map ---------- */
+:root { --map0: #eef1f6; --map1: #bccbe2; --map2: #a9bedb; --map3: #6f8fbd; --map4: #34588f; --map5: #0c2340; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --map0: #1a2539; --map1: #1f3556; --map2: #2b4f80; --map3: #4573b0; --map4: #7aa3db; --map5: #b9d0f0; } }
+:root[data-theme="dark"] { --map0: #1a2539; --map1: #1f3556; --map2: #2b4f80; --map3: #4573b0; --map4: #7aa3db; --map5: #b9d0f0; }
+.usmap { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 18px; align-items: start; }
+.usmap-svg svg { width: 100%; height: auto; display: block; }
+path.st { stroke: var(--card); stroke-width: 1; stroke-linejoin: round; }
+path.st:hover { stroke: var(--gold); stroke-width: 2.5; }
+.st.s0 { fill: var(--map0); } .st.s1 { fill: var(--map1); } .st.s2 { fill: var(--map2); } .st.s3 { fill: var(--map3); } .st.s4 { fill: var(--map4); } .st.s5 { fill: var(--map5); }
+i.st { display: inline-block; width: 16px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+i.st.s1 { background: var(--map1); } i.st.s2 { background: var(--map2); } i.st.s3 { background: var(--map3); } i.st.s4 { background: var(--map4); } i.st.s5 { background: var(--map5); }
+.usmap-side { display: grid; gap: 14px; font-size: 13.5px; }
+.usmap-read { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 64px; background: var(--bg); }
+.usmap-legend > div { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; }
+@media (max-width: 700px) { .usmap { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -660,6 +675,67 @@ const SAMPLE = /*SAMPLE*/;
     const keys = order ? order.filter((k) => c.has(k)) : [...c.keys()].sort((a, b) => c.get(b) - c.get(a) || (a < b ? -1 : 1));
     return keys.map((k) => ({ label: k, value: c.get(k) }));
   };
+
+  // ======================================================== map: talks by state
+  // Clubs are placed by their name, since the Region column doesn't follow geography.
+  const US_STATES = /*STATES*/;
+  const STATE_CODES = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming" };
+  const CLUB_STATE = {
+    "akron": "OH", "ann arbor": "MI", "atlanta": "GA", "aurora/fox valley": "IL", "austin": "TX", "bakersfield": "CA", "black hills": "SD", "blue ridge": "VA", "boca raton": "FL", "buffalo/western new york": "NY", "california central coast": "CA", "canton": "OH", "cape cod": "MA", "cedar rapids/iowa city": "IA", "charleston": "SC", "charlotte": "NC", "charlottesville": "VA", "chattanooga": "TN", "chicago": "IL", "chico/northern california": "CA", "cincinnati": "OH", "cleveland": "OH", "columbus": "OH", "corpus christi": "TX", "dallas": "TX", "dayton": "OH", "daytona beach": "FL", "decatur": "IL", "denver": "CO", "des moines": "IA", "detroit": "MI", "dubuque": "IA", "el paso": "TX", "emerald coast": "FL", "erie": "PA", "eugene/southern oregon": "OR", "fairfield county": "CT", "finger lakes": "NY", "flint": "MI", "fort lauderdale": "FL", "fort wayne": "IN", "fort worth": "TX", "gettysburg": "PA", "grand rapids": "MI", "great lakes bay": "MI", "greater boston": "MA", "greater dupage": "IL", "greater hartford": "CT", "greater jacksonville": "FL", "greater louisville": "KY", "greater orlando": "FL", "greater sarasota": "FL", "greater seattle": "WA", "greater tampa bay": "FL", "greater williamsport": "PA", "greensburg/uniontown": "PA", "harrisburg": "PA", "hilton head": "SC", "houston": "TX", "indianapolis": "IN", "inland empire": "CA", "jersey shore": "NJ", "joliet": "IL", "kalamazoo": "MI", "kansas city": "MO", "knoxville/east tennessee": "TN", "kokomo": "IN", "lacrosse/winona": "WI", "laporte county": "IN", "lake county": "IL", "lansing": "MI", "las vegas": "NV", "lehigh valley": "PA", "long island": "NY", "los angeles": "CA", "madison": "WI", "mahoning & shenango valleys": "OH", "mansfield": "OH", "marion": "IN", "mchenry county": "IL", "mclean county": "IL", "memphis": "TN", "miami": "FL", "mid-hudson valley": "NY", "milwaukee": "WI", "mobile": "AL", "mohawk valley": "NY", "monterey bay": "CA", "muskegon": "MI", "naples": "FL", "nashville": "TN", "new haven": "CT", "new orleans": "LA", "new york city": "NY", "northern colorado": "CO", "northern new jersey": "NJ", "northwest indiana": "IN", "oklahoma city": "OK", "omaha": "NE", "orange county": "CA", "palm beaches": "FL", "palm springs": "CA", "pensacola": "FL", "peoria": "IL", "philadelphia": "PA", "phoenix": "AZ", "pittsburgh": "PA", "portland": "OR", "quad cities": "IA", "reading": "PA", "reno/northern nevada": "NV", "rhode island/se massachusetts": "RI", "richmond": "VA", "rio grande valley": "TX", "rochester, ny": "NY", "rock river valley": "IL", "rockford": "IL", "sacramento": "CA", "salina": "KS", "san antonio": "TX", "san diego": "CA", "san francisco": "CA", "san joaquin": "CA", "san jose/silicon valley": "CA", "santa barbara": "CA", "savannah": "GA", "schuylkill county": "PA", "scranton": "PA", "siouxland": "IA", "south carolina/midlands": "SC", "south jersey": "NJ", "southwest florida": "FL", "southwest indiana": "IN", "spokane": "WA", "st. joseph valley": "IN", "st. louis": "MO", "staten island": "NY", "tallahassee": "FL", "the villages": "FL", "toledo": "OH", "triple cities": "NY", "tucson": "AZ", "tulsa": "OK", "vail": "CO", "ventura county": "CA", "vero beach": "FL", "washington, d.c.": "DC", "west texas/eastern new mexico": "TX", "western carolinas": "NC", "western kentucky/paducah": "KY", "wichita": "KS", "wilmington, nc": "NC", "worcester county": "MA",
+  };
+  const ABROAD = ["canada", "hong kong", "bolivia", "colombia", "puerto rico", "mexico", "ireland", "england", "london", "japan", "china", "philippines", "brazil", "peru", "chile", "argentina", "italy", "rome", "france", "germany", "korea", "india", "australia", "kenya", "uganda", "nigeria", "ghana"];
+  const STATE_BY_NAME = Object.fromEntries(Object.entries(STATE_CODES).map(([c, n]) => [n.toLowerCase(), c]));
+  function clubPlace(name) {
+    const n = String(name || "").toLowerCase().trim();
+    if (CLUB_STATE[n]) return { state: CLUB_STATE[n] };
+    if (ABROAD.some((w) => n.includes(w))) return { abroad: name };
+    const abbr = n.match(/,\s*([a-z]{2})$/);
+    if (abbr && STATE_CODES[abbr[1].toUpperCase()]) return { state: abbr[1].toUpperCase() };
+    // Longest state name first, so "West Virginia" wins over "Virginia".
+    const hit = Object.keys(STATE_BY_NAME).sort((a, b) => b.length - a.length).find((s) => n.includes(s));
+    return hit ? { state: STATE_BY_NAME[hit] } : { unknown: name };
+  }
+
+  function mapChart(ms) {
+    const by = {}, abroad = [], unknown = [];
+    for (const m of ms) {
+      const c = m.pair.club, p = clubPlace(c.name);
+      if (p.state) (by[p.state] = by[p.state] || []).push(c.name);
+      else (p.abroad ? abroad : unknown).push(c.name);
+    }
+    const max = Math.max(1, ...Object.values(by).map((v) => v.length));
+    // Five equal steps from light to dark; states with no talks stay plain.
+    const steps = Math.min(5, max), bin = (n) => Math.ceil(n * steps / max);
+    // Spread the steps across the full ramp so the busiest state is always darkest navy.
+    const tone = (b) => (steps === 1 ? 5 : Math.round(1 + (b - 1) * 4 / (steps - 1)));
+    const shade = (n) => (n ? `class="st s${tone(bin(n))}"` : `class="st s0"`);
+    const paths = Object.entries(US_STATES).map(([name, d]) => {
+      const code = STATE_BY_NAME[name.toLowerCase()], clubs = by[code] || [];
+      return `<path d="${d}" ${shade(clubs.length)} data-st="${esc(name)}" data-n="${clubs.length}" data-clubs="${esc(clubs.join(", "))}"><title>${esc(name)}: ${plural(clubs.length, "talk")}</title></path>`;
+    }).join("");
+    const legend = Array.from({ length: steps }, (_, i) => {
+      const lo = Math.floor(i * max / steps) + 1, hi = Math.floor((i + 1) * max / steps);
+      return `<span><i class="st s${tone(i + 1)}"></i>${lo === hi ? lo : `${lo}–${hi}`}</span>`;
+    }).join("");
+    const side = (title, list) => list.length ? `<div><b>${title}</b> <span class="muted">(${list.length})</span><div class="sub">${esc(list.join(", "))}</div></div>` : "";
+    return `<div class="usmap">
+      <div class="usmap-svg"><svg viewBox="0 0 975 610" role="img" aria-label="Map of talks by state">${paths}</svg></div>
+      <div class="usmap-side">
+        <div class="usmap-read" id="map-read"><b>Hover over a state</b><div class="sub">to see its talks and clubs.</div></div>
+        <div class="usmap-legend"><span class="muted small">Talks per state</span><div>${legend}</div></div>
+        ${side("Outside the US mainland", abroad)}${side("Location not known", unknown)}
+      </div></div>`;
+  }
+  function wireMap(s) {
+    const read = $("#map-read", s);
+    if (!read) return;
+    const reset = read.innerHTML;
+    $$("path[data-st]", s).forEach((p) => {
+      p.onmouseenter = () => { read.innerHTML = `<b>${esc(p.dataset.st)}</b> · ${plural(+p.dataset.n, "talk")}${p.dataset.clubs ? `<div class="sub">${esc(p.dataset.clubs)}</div>` : ""}`; };
+      p.onclick = p.onmouseenter;
+      p.onmouseleave = () => { read.innerHTML = reset; };
+    });
+  }
 
   // ======================================================== plan comparison
   function leaders(plans) {
@@ -1091,11 +1167,11 @@ const SAMPLE = /*SAMPLE*/;
       <div class="card stat"><span>Repeat speakers</span><b>${s.repeat_speakers}${delta("repeat_speakers", false)}</b></div>
       <div class="card stat"><span>Faculty giving talks</span><b>${s.profs_used}${delta("profs_used", true)}</b></div></div>`;
     const ms = plan.matches;
-    const tabs = [["month", "Talks by month"], ["choice", "Club's ranking of its talk"], ["region", "Talks by region"], ["busy", "Busiest professors"]];
+    const tabs = [["month", "Talks by month"], ["choice", "Club's ranking of its talk"], ["region", "Map of talks"], ["busy", "Busiest professors"]];
     const chart = {
       month: () => bars(countsOf(ms.map((m) => m.suggested_month), MONTHS), { unit: "talks" }),
       choice: () => bars(countsOf(ms.map((m) => (m.pair.lectures.length ? Engine.ordinal(m.pair.lectures[0][0]) + " choice" : "Same topic, other talk")), ["1st choice", "2nd choice", "3rd choice", "4th choice", "5th choice", "Same topic, other talk"]), { unit: "clubs" }),
-      region: () => bars(countsOf(ms.map((m) => m.pair.club.region || "No region")), { unit: "talks" }),
+      region: () => mapChart(ms),
       busy: () => bars(countsOf(ms.map((m) => m.pair.prof.name)).slice(0, 10), { unit: "talks" }),
     }[state.resTab]();
     const changedLine = changed || changedLevels().length || state.pins.length
@@ -1248,6 +1324,7 @@ const SAMPLE = /*SAMPLE*/;
 
   // ======================================================== wiring
   function wire(s) {
+    wireMap(s);
     $$("[data-go]", s).forEach((b) => b.onclick = () => go(b.dataset.go));
     $$("[data-view]", s).forEach((b) => b.onclick = () => { state.view = b.dataset.view; state.q = ""; render(); });
     $$("[data-planview]", s).forEach((b) => b.onclick = () => { state.planView = b.dataset.planview; render(); });
