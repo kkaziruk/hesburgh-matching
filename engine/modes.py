@@ -73,13 +73,13 @@ def recommended(pair, ctx):
     #   1. one more club served                       1000
     #   2. the club's preference (one rank step)       100
     #   3. no repeat speaker                            60
-    #   4. balanced fit (score, travel, spread)        ~10-50
+    #   4. professors' travel wishes                  up to 40
+    #   5. balanced fit (score, spread)                ~10-50
     w = ctx.weights
     value = EVERY_CLUB_FIRST + PREFERENCE_FIRST * club_preference(pair) + pair.score
     if pair.repeat:
         value -= 60 * w.repeat_penalty
-    if pair.travel:
-        value += 0.15 * w.travel_bonus * pair.score
+    value += 40 * w.travel_bonus * pair.travel_fit
     return value
 
 
@@ -104,8 +104,7 @@ def balanced(pair, ctx):
     value = pair.score
     if pair.repeat:
         value *= max(0.0, 1.0 - 0.6 * w.repeat_penalty)
-    if pair.travel:
-        value *= 1.0 + 0.15 * w.travel_bonus
+    value *= max(0.1, 1.0 + 0.2 * w.travel_bonus * pair.travel_fit)
     return value
 
 

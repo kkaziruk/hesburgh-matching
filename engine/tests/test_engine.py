@@ -84,7 +84,9 @@ class TestRealData(unittest.TestCase):
         self.assertGreaterEqual(s["most_clubs"]["clubs_matched"], s["best_fit"]["clubs_matched"])
         # Recommended: as many clubs as Most clubs, as many 1st choices as Top choices, no repeats.
         self.assertEqual(s["recommended"]["clubs_matched"], s["most_clubs"]["clubs_matched"])
-        self.assertGreaterEqual(s["recommended"]["first_choice_lectures"], s["top_choices"]["first_choice_lectures"])
+        # It may give up one 1st choice to respect a professor's travel limit, never more.
+        self.assertGreaterEqual(s["recommended"]["first_choice_lectures"], s["top_choices"]["first_choice_lectures"] - 1)
+        self.assertGreater(s["recommended"]["first_choice_lectures"], s["best_fit"]["first_choice_lectures"])
         self.assertEqual(s["recommended"]["repeat_speakers"], 0)
 
     def test_unmatched_have_reasons(self):
@@ -170,6 +172,38 @@ class TestWeights(unittest.TestCase):
         zero = {k: 0 for k in ("lecture_match", "theme_match", "month_overlap", "format_match")}
         for plan in run_plans(self.data, zero).values():
             self.assertEqual(plan.summary["clubs_matched"], 40)
+
+
+class TestTravel(unittest.TestCase):
+    def test_reading_answers(self):
+        from engine.geo import read_wishes
+        w = read_wishes("San Diego, California\nSan Francisco, California")
+        self.assertEqual(w.clubs, {"san diego", "san francisco"})
+        self.assertEqual(w.states, set())                        # "San Diego, California" is a city
+        w = read_wishes("I have already done Wichita and Cleveland. Any of the Florida clubs would be great.")
+        self.assertEqual((w.clubs, w.states), (set(), {"FL"}))   # past visits are not wishes
+        self.assertEqual(read_wishes("I'd love to go to St. Louis.").clubs, {"st. louis"})
+        self.assertIn("san francisco", read_wishes("Washington, DC and San Francisoc").clubs)
+        self.assertEqual(read_wishes("East coast and midwest").regions[0][0], "East Coast")
+        self.assertFalse(read_wishes("").stated)
+
+    def test_fit(self):
+        from engine.geo import travel_fit
+        self.assertEqual(travel_fit("Dallas, TX", "Dallas")[0], 1.0)
+        self.assertGreater(travel_fit("Any Bay Area club", "San Jose/Silicon Valley")[0], 0.5)
+        big = "I have a preference for major cities"
+        self.assertGreater(travel_fit(big, "Chicago")[0], 0)
+        self.assertLess(travel_fit(big, "Salina")[0], 0)          # no big-city person to rural Kansas
+        drive = "happy to do any 4 hour drive or less from South Bend"
+        self.assertGreater(travel_fit(drive, "Joliet")[0], 0)
+        self.assertLess(travel_fit(drive, "Denver")[0], 0)
+        self.assertEqual(travel_fit("", "Denver"), (0.0, ""))
+        self.assertGreater(travel_fit("clubs in the mountain west", "Utah")[0], 0)   # whatever Region says
+
+    def test_every_club_has_a_location(self):
+        from engine.geo import club_location
+        for club in load_inputs(*FILES).clubs:
+            self.assertIsNotNone(club_location(club.name), club.name)
 
 
 class TestSolver(unittest.TestCase):

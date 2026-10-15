@@ -93,7 +93,7 @@ applies to all plans unless noted.
 | `title` | Senior speakers for top clubs | title boost, up to x1.3 |
 | `repeat_penalty` | Avoid repeat speakers | Recommended and Balanced only |
 | `spread` | Spread events across faculty | Recommended and Balanced only: cost of 2nd and 3rd events |
-| `travel_bonus` | Honour travel wishes | Recommended and Balanced only |
+| `travel_bonus` | Professors' travel wishes | All plans. Up to 6 points when a club suits the professor's travel answer, and up to −3.6 when it goes against it (big-city person to a small town, beyond a drive limit). Recommended weighs it up to 40, below no-repeat. Read by `engine/geo.py` from a bundled location table; the Region column is not used. |
 | `staff_pick` | Agree with staff's picks | 10 points when the professor equals the club's "2026 Assignment". Defaults to 0 so plans stay an independent second opinion. In Recommended it only breaks ties, because clubs' own rankings come first. |
 
 `WEIGHT_INFO` (exported) is `{key: {label, help, group, applies_to, default, min, max}}`.
@@ -153,7 +153,7 @@ Attributes:
 | `prof_events` | int | events this professor has in this plan |
 | `prof_max_events` | int | |
 | `staff_pick` | str | the club's "2026 Assignment" value, if any |
-| `why` | str | short plain-English reason, e.g. "1st-choice lecture 'Decoding AI'; 3 shared months" |
+| `why` | str | short plain-English reason, e.g. "1st-choice lecture 'Decoding AI'; 3 shared months; travel: asked for San Diego by name". The travel part appears only when the professor's travel answer applies to this club. |
 
 ### Plan.unmatched columns
 

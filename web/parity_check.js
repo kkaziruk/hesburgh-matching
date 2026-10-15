@@ -18,6 +18,14 @@ const WEIGHTS = [
   { lecture_match: 0.3, theme_match: 2, month_overlap: 0, format_match: 3 },
 ];
 
+// Made-up travel answers that exercise every rule in geo.py, on top of the real ones.
+const TRAVEL_SAMPLES = [
+  "I'd love San Diego or the Bay Area. I have already presented in Chicago.",
+  "Anywhere on the East coast, or Lexington, KY", "Major cities only please", "AA and A sized clubs",
+  "Within a 4 hour drive of South Bend", "San Francisoc, Dallas, TX and NYC", "mountain west; Latin America; Canada",
+  "I'm open to anything, but prefer major cities", "Florida or Pennsylvannia. St. Louis too!", "Washington DC, Philly, indy",
+];
+
 const PY = `
 import json, sys
 sys.path.insert(0, sys.argv[1])
@@ -25,7 +33,10 @@ from engine import load_inputs, data_issues, run_plans
 from engine.modes import REGISTRY
 d, cases = sys.argv[2], json.loads(sys.argv[3])
 data = load_inputs(f"{d}/club_info.csv", f"{d}/prof_info.csv", f"{d}/lecture_info.csv")
-out = {"issues": data_issues(data), "columns": data.columns, "cases": []}
+from engine.geo import travel_fit
+answers = [p.travel_wishes for p in data.profs] + json.loads(sys.argv[4])
+out = {"issues": data_issues(data), "columns": data.columns, "cases": [],
+       "travel": [[list(travel_fit(a, c.name, c.size, c.region)) for c in data.clubs] for a in answers]}
 for w in cases:
     c = {}
     for k, p in run_plans(data, w, list(REGISTRY)).items():
@@ -36,7 +47,7 @@ for w in cases:
 print(json.dumps(out, default=str))
 `;
 
-const py = JSON.parse(execFileSync("python3", ["-c", PY, ROOT, DATA, JSON.stringify(WEIGHTS)], { maxBuffer: 64 << 20 }).toString());
+const py = JSON.parse(execFileSync("python3", ["-c", PY, ROOT, DATA, JSON.stringify(WEIGHTS), JSON.stringify(TRAVEL_SAMPLES)], { maxBuffer: 64 << 20 }).toString());
 const read = (f) => fs.readFileSync(path.join(DATA, f), "utf8");
 const data = E.loadInputs({ club: read("club_info.csv"), prof: read("prof_info.csv"), lecture: read("lecture_info.csv") });
 
@@ -50,6 +61,9 @@ function same(js, pyv, what) {
 
 same(E.dataIssues(data), py.issues, "data issues");
 same(data.columns, py.columns, "columns used");
+[...data.profs.map((p) => p.travel_wishes), ...TRAVEL_SAMPLES].forEach((a, i) => {
+  data.clubs.forEach((c, j) => same(E.travelFit(a, c.name, c.size, c.region), py.travel[i][j], `travel fit for "${String(a).slice(0, 40)}" at ${c.name}`));
+});
 WEIGHTS.forEach((w, i) => {
   const { plans } = E.runPlans(data, w, Object.keys(E.MODES));
   for (const [key, plan] of Object.entries(plans)) {

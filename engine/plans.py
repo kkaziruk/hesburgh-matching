@@ -220,13 +220,10 @@ def still_free(c: int, grid: PairGrid, events: Counter) -> list[tuple[str, str]]
         pair, open_seats = grid[c, p], prof.max_events - events[p]
         if open_seats <= 0 or pair.repeat or not prof.lectures:
             continue
-        named = clean(club.name.split("/")[0]) in clean(prof.travel_wishes)
         note = f"{open_seats} open slot{'s' if open_seats > 1 else ''}"
-        if named:
-            note += f"; asked for {club.name} by name"
-        elif pair.travel:
-            note += "; asked to visit this area"
-        options.append(((named, pair.travel, open_seats, len(prof.months)), prof.name, note))
+        if pair.travel_note:
+            note += f"; {pair.travel_note}"
+        options.append(((pair.travel_fit, open_seats, len(prof.months)), prof.name, note))
     options.sort(key=lambda option: option[0], reverse=True)
     return [(name, f"still free: {note}") for _, name, note in options[:3]]
 

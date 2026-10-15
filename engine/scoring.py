@@ -9,6 +9,7 @@ so the numbers stay familiar:
              +  2 per shared month
              +  1 per shared talk format
              + 10 if staff already picked this professor (off by default)
+             + up to 10 for professors' travel wishes (-6 when it goes against them; see geo.py)
     score    = points x club priority x title boost
 
 Every number above has a dial in `Weights` (see WEIGHT_INFO for plain-English help).
@@ -24,6 +25,7 @@ import re
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
+from .geo import travel_fit
 from .model import Club, Professor
 from .text import MONTHS, clean, ordinal, same_person
 
@@ -135,9 +137,12 @@ WEIGHT_INFO = {
              "0 lets the best professors take every slot they offered.",
         group="Fairness", applies_to=FAIRNESS_PLANS),
     "travel_bonus": dict(
-        label="Honour travel wishes",
-        help="Bonus when a professor asked to visit the club's city or region.",
-        group="Fairness", applies_to=FAIRNESS_PLANS),
+        label="Professors' travel wishes",
+        help="How much to follow where professors said they'd like to go: clubs or cities they named, "
+             "their states and regions, 'major cities only', a drive limit from South Bend. A named club "
+             "earns up to 10 points at 1x, and going against a stated wish (a big-city person to a small "
+             "town) costs up to 6. Recommended weighs it more heavily. 0 ignores travel wishes.",
+        group="Fairness", applies_to=ALL_PLANS),
     "staff_pick": dict(
         label="Agree with staff's picks",
         help="Bonus when the professor is the one already in the club's '2026 Assignment' column "
@@ -175,30 +180,6 @@ def choice_factor(rank: int | None, w: Weights) -> float:
     return 1.0 if rank is None else max(0.2, 1.0 - 0.1 * w.choice_rank * (rank - 1))
 
 
-PLACE_ALIASES = {
-    "bay area": ["san francisco", "san jose"], "silicon valley": ["san francisco", "san jose"],
-    "dc": ["washington", "maryland"], "nyc": ["new york city"], "new england": ["boston", "new haven"],
-    "california": ["san francisco", "san diego", "orange county", "los angeles", "palm springs", "san jose"],
-    "arizona": ["phoenix"], "colorado": ["denver", "southern colorado"],
-}
-
-
-def wants_to_visit(prof: Professor, club: Club) -> bool:
-    """Does the professor's free-text travel wish mention this club or its region?"""
-    wish = clean(prof.travel_wishes)
-    if not wish:
-        return False
-    mentions = lambda phrase: re.search(rf"\b{re.escape(phrase)}\b", wish) is not None
-    places = [clean(p) for p in re.split(r"[/,]", club.name) if len(p.strip()) >= 4]
-    if club.region:
-        places.append(clean(club.region))
-    if any(mentions(place) for place in places):
-        return True
-    club_name, region = clean(club.name), clean(club.region)
-    return any(mentions(alias) and any(t in club_name or t == region for t in targets)
-               for alias, targets in PLACE_ALIASES.items())
-
-
 # ------------------------------------------------------------------ the pair
 
 @dataclass
@@ -213,8 +194,13 @@ class Pair:
     fit: float                          # points, ignoring who the club is
     score: float                        # fit x club priority x title boost
     repeat: bool                        # professor already spoke here 2022-2025
-    travel: bool                        # professor asked to visit this area
+    travel_fit: float                   # -1 (against their travel wishes) .. +1 (club they named)
+    travel_note: str                    # why, e.g. "asked for San Diego by name"
     allowed: bool = False               # shares a month and a requested theme or lecture
+
+    @property
+    def travel(self) -> bool:
+        return self.travel_fit > 0
 
     @property
     def first_choice_lecture(self) -> bool:
@@ -231,8 +217,8 @@ class Pair:
             reasons = [f"{ordinal(self.choice_rank)}-choice theme {self.shared_themes[0]}"]
         n = len(self.shared_months)
         reasons.append(f"{n} shared month{'' if n == 1 else 's'}")
-        if self.travel:
-            reasons.append("in professor's preferred area")
+        if self.travel_note:
+            reasons.append(f"travel: {self.travel_note}")
         if self.repeat:
             reasons.append("REPEAT speaker")
         return "; ".join(reasons)
@@ -257,6 +243,7 @@ def score_pair(club: Club, prof: Professor, w: Weights) -> Pair:
         rank = None
 
     allowed = bool(months) and bool(themes or lectures)
+    travel, travel_note = travel_fit(prof.travel_wishes, club.name, club.size, club.region)
     fit = 0.0
     score = 0.0
     if allowed:
@@ -265,7 +252,8 @@ def score_pair(club: Club, prof: Professor, w: Weights) -> Pair:
                + 5 * w.theme_match * len(themes) * choice_factor(rank, w)
                + 2 * w.month_overlap * len(months)
                + 1 * w.format_match * len(formats)
-               + 10 * w.staff_pick * staff_choice)
+               + 10 * w.staff_pick * staff_choice
+               + 6 * w.travel_bonus * travel)
         fit = max(fit, MIN_POINTS)      # an allowed pair is always worth something, even with dials at 0
         priority = club_priority(club, w)
         boost = title_boost(prof, w) if priority >= TITLE_BOOST_FROM_PRIORITY else 1.0
@@ -273,7 +261,7 @@ def score_pair(club: Club, prof: Professor, w: Weights) -> Pair:
 
     return Pair(club, prof, months, themes, lectures, formats, rank, fit, score,
                 repeat=any(same_person(prof.name, s) for s in club.past_speakers),
-                travel=wants_to_visit(prof, club), allowed=allowed)
+                travel_fit=travel, travel_note=travel_note, allowed=allowed)
 
 
 class PairGrid:
