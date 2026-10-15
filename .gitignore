@@ -1,0 +1,7 @@
+# Never commit club, professor or lecture data
+*.csv
+*.xlsx
+OUTPUTS/
+__pycache__/
+*.pyc
+.DS_Store
