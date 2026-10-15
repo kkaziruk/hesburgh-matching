@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
-/* Layout: a guided four-step tool. Navy header, a step bar under it, and one step on screen at a time with Back and Next at the bottom. */
+/* Layout: a landing page that compares the plans, then a guided five-step tool. Navy header, a step bar under it, and one step on screen at a time with Back and Next at the bottom. */
 :root {
   --bg: #f4f5f8;
   --card: #ffffff;
@@ -282,18 +282,115 @@ details.problem > summary > span:first-child { flex: 1; min-width: 0; }
 .cal div.pick { box-shadow: inset 0 0 0 2px var(--navy); }
 .cal-key i.pick { box-shadow: inset 0 0 0 2px var(--navy); }
 @media (max-width: 560px) { .colgrid { grid-template-columns: minmax(0, 1fr); } .prio-h { grid-template-columns: minmax(0, 1fr); } }
+/* ---------- landing page ---------- */
+.steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.brand-btn { border: 0; background: none; color: inherit; padding: 0; text-align: left; cursor: pointer; border-radius: 8px; }
+.stage-inner.home { grid-template-rows: auto auto; align-content: start; padding-bottom: 28px; }
+.hero { background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--gold); border-radius: 12px; box-shadow: var(--shadow); padding: 22px 28px; display: grid; gap: 12px; }
+.kicker { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-text); }
+.hero h1 { font-size: clamp(26px, 3vw, 34px); line-height: 1.15; }
+.hero > p { max-width: 70ch; color: var(--text-2); font-size: 16px; }
+.hero-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+.hero-steps > div { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 10px; align-content: start; background: var(--bg); }
+.hero-steps .num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--navy); color: var(--on-navy); grid-row: span 2; }
+.hero-steps .sub { font-size: 12.5px; }
+.hero-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.btn.big { padding: 13px 26px; font-size: 16.5px; }
+.plist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; }
+
+/* ---------- plan comparison ---------- */
+.ctable-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.ctable { border-collapse: collapse; width: 100%; font-size: 14px; }
+.ctable th, .ctable td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.ctable thead th { font-family: var(--serif); font-size: 15px; font-weight: 600; vertical-align: bottom; background: var(--bg); }
+.ctable thead th .tag { display: flex; width: max-content; margin: 4px 0 0 auto; }
+.ctable tbody th { text-align: left; font-weight: 600; color: var(--text-2); white-space: normal; min-width: 180px; }
+.ctable tbody tr:last-child > * { border-bottom: 0; }
+.ctable .rec { background: var(--gold-soft); }
+.ctable td.win { font-weight: 700; color: var(--text); }
+.ctable td small { color: var(--text-2); font-weight: 400; }
+.star { color: var(--gold); margin-right: 4px; }
+.pcards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pcard { position: relative; display: grid; gap: 6px; align-content: start; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; box-shadow: var(--shadow); }
+.pcard:hover { border-color: var(--text-2); }
+.pcard input { position: absolute; top: 16px; right: 16px; accent-color: var(--navy); width: 18px; height: 18px; margin: 0; }
+.pcard:has(input:checked) { border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy), var(--shadow); }
+.pcard.rec { border-top: 3px solid var(--gold); }
+.pcard-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-right: 26px; }
+.pcard-h b { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+.pcard .sub { font-size: 13.5px; color: var(--text-2); }
+.best { font-size: 13px; color: var(--gold-text); }
+.pnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 14px; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; }
+.pnums > span { display: grid; font-size: 12.5px; line-height: 1.3; }
+.pnums > span b { font-size: 15px; }
+.pnums em { font-style: normal; color: var(--text-2); }
+.pnums b { white-space: nowrap; }
+.pnums .win b { color: var(--gold-text); }
+.d { font-size: 12px; font-weight: 700; margin-left: 5px; font-family: var(--sans); }
+.d.good { color: var(--good); }
+.d.bad { color: var(--bad); }
+
+/* ---------- bar charts ---------- */
+.charts2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.bars { display: grid; gap: 7px; }
+.bar-row { display: grid; grid-template-columns: minmax(80px, 170px) minmax(0, 1fr) 3ch; gap: 10px; align-items: center; font-size: 13.5px; }
+.bar-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.bar-t { height: 14px; display: block; }
+.bar-t i { display: block; height: 100%; min-width: 3px; background: var(--navy-2); border-radius: 0 4px 4px 0; }
+.bar-row.hi .bar-t i { background: var(--gold); }
+.bar-row.hi .bar-l { color: var(--text); font-weight: 700; }
+.bar-v { text-align: right; font-weight: 600; }
+
+/* ---------- final plan ---------- */
+.results { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 18px; align-items: start; }
+.tweak { position: sticky; top: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: calc(100vh - 250px); }
+.tweak-b { overflow: auto; display: grid; gap: 12px; align-content: start; }
+details.tgroup { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+details.tgroup > summary { cursor: pointer; font-weight: 700; }
+details.tgroup[open] { display: grid; gap: 8px; }
+details.tgroup .prio-h { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+details.tgroup .prio-h select { justify-self: start; }
+.tweak-io { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 12px; }
+.res-main { display: grid; gap: 14px; min-width: 0; align-content: start; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpis .stat b { font-size: 24px; }
+.chart-b { min-height: 230px; }
+.dlrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 18px; align-items: center; }
+.dlrow #dl-note { grid-column: 1 / -1; }
+.dlbtns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.dlcard { border-top: 3px solid var(--gold); }
+.wide-select { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); }
+table.issues { width: 100%; border-collapse: collapse; }
+table.issues td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+
+@media (max-width: 1100px) {
+  .pcards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .results { grid-template-columns: minmax(0, 1fr); }
+  .tweak { position: static; max-height: none; }
+  .res-main { order: -1; }
+  .hero-steps { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding: 20px 18px; }
+}
+@media (max-width: 700px) {
+  .pcards, .charts2, .plist { grid-template-columns: minmax(0, 1fr); }
+  .dlrow { grid-template-columns: minmax(0, 1fr); }
+  .kpis .stat b { font-size: 20px; }
+}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
 <div class="app">
   <header class="head pad">
-    <div class="brand">
+    <button type="button" class="brand brand-btn" id="go-home" aria-label="Home: what this tool does">
       <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
         <rect x="1" y="1" width="36" height="36" rx="9" fill="#c99700"/>
         <path d="M12 26V12M12 19h7M19 12v14M24 12v14h5" stroke="#0c2340" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <div><b>Hesburgh Lecture Matcher</b><span>Pairs faculty speakers with alumni clubs</span></div>
-    </div>
+    </button>
     <div class="spacer"></div>
     <button type="button" class="head-btn" id="open-settings" aria-label="Matching settings">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
@@ -306,6 +403,7 @@ details.problem > summary > span:first-child { flex: 1; min-width: 0; }
   <main class="stage pad" id="stage"></main>
 </div>
 <input id="file-input" type="file" accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden>
+<input id="settings-input" type="file" accept=".json,application/json" hidden>
 <div class="overlay" id="overlay" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -329,10 +427,11 @@ const SAMPLE = /*SAMPLE*/;
   ];
   const FILE_NAME = Object.fromEntries(FILES.map(([k, n]) => [k, n]));
   const STEPS = [
-    ["upload", "Add files", "Upload the three spreadsheets"],
+    ["upload", "Add files", "The three spreadsheets"],
+    ["plan", "Choose a plan", "Compare the outcomes"],
     ["review", "Review matches", "Check each club's speaker"],
-    ["fix", "Fix problems", "Clubs still without a speaker"],
-    ["download", "Download", "Save the results"],
+    ["fix", "Fix problems", "Clubs without a speaker"],
+    ["results", "Final plan", "Fine-tune and download"],
   ];
 
   // Priorities in plain words: five levels instead of raw numbers.
@@ -351,6 +450,8 @@ const SAMPLE = /*SAMPLE*/;
         "Clubs list up to five talks in order. At Max, getting a club its 1st choice matters much more than its 3rd. At Off, any talk on the club's list counts the same."],
       ["lecture_match", "Exact talk requested", "An exact requested talk counts more than just the same topic.", [0, 0.5, 1, 1.5, 2],
         "A club can ask for a specific talk or just a topic area. Higher values reward giving clubs the exact talk they named. Lower values are happy with any talk on the right topic."],
+      ["theme_match", "Right topic area", "A talk on a topic the club picked counts, even if it isn't the exact talk.", [0, 0.5, 1, 1.5, 2],
+        "Clubs pick topic areas such as Arts & Culture. Higher values reward any professor who speaks on a topic the club chose, even without the exact talk. Lower values lean harder on the exact talk."],
       ["month_overlap", "Easy to schedule", "Favour pairs who are both free in many of the same months.", [0, 0.5, 1, 1.5, 2],
         "When a professor and a club share many free months, the event is easier to schedule. Higher values prefer those pairs. They must always share at least one month, whatever this is set to."],
       ["format_match", "Preferred talk format", "Favour professors who offer the format the club asked for.", [0, 0.5, 1, 1.5, 2],
@@ -369,21 +470,61 @@ const SAMPLE = /*SAMPLE*/;
   ];
   const PRIORITY = Object.fromEntries(PRIORITIES.flatMap(([, , items]) => items.map((p) => [p[0], p])));
   const STANDARD_LEVELS = Object.fromEntries(Object.keys(PRIORITY).map((k) => [k, k === "staff_pick" ? "Off" : "Standard"]));
+  const PRESETS = {
+    "Standard": {},
+    "Big clubs first": { size: "Max", engagement: "Low" },
+    "Active clubs first": { engagement: "Max", size: "Low" },
+    "Clubs' wishes first": { choice_rank: "Max", lecture_match: "High", title: "Low" },
+    "Fresh faces": { repeat_penalty: "Max", spread: "High" },
+    "Share the faculty": { spread: "Max", repeat_penalty: "High", travel_bonus: "High" },
+    "Keep our picks": { staff_pick: "Max" },
+  };
+  const presetLevels = (name) => Object.assign({}, STANDARD_LEVELS, PRESETS[name] || {});
+  const matchingPreset = (lv) => Object.keys(PRESETS).find((n) => Object.entries(presetLevels(n)).every(([k, v]) => lv[k] === v)) || null;
+
   const PLAN_ORDER = ["recommended", "most_clubs", "top_choices", "best_fit", "balanced", "legacy_greedy"];
+  const BLURB = {
+    recommended: "Gives the most clubs a speaker, then each club the talk it ranked highest, with no repeat speakers and talks shared fairly.",
+    most_clubs: "Gives the most clubs a speaker, and treats every club the same whatever its size.",
+    top_choices: "Gives as many clubs as possible the exact talk they ranked first.",
+    best_fit: "The strongest overall fit, favouring big, active clubs.",
+    balanced: "Shares talks across more faculty, avoids repeat speakers, and sends professors where they asked to go.",
+    legacy_greedy: "The old spreadsheet method, kept for comparison.",
+  };
+  // The measures plans are compared on: summary key, label, higher is better, short "best for" name.
+  const MEASURES = [
+    ["clubs_matched", "Clubs with a speaker", true, "clubs served", "Clubs served"],
+    ["first_choice_lectures", "Got the talk they ranked 1st", true, "1st choices", "1st choice"],
+    ["requested_lecture_matches", "Got a talk they asked for", true, "requested talks", "Asked-for talk"],
+    ["repeat_speakers", "Repeat speakers", false, "fewest repeats", "Repeats"],
+    ["profs_used", "Faculty giving talks", true, "sharing talks across faculty", "Faculty used"],
+    ["max_events_per_prof", "Most talks for one professor", false, "lightest busiest-professor load", "Busiest prof."],
+  ];
   const DEFAULTS = { plan: "recommended", levels: STANDARD_LEVELS };
 
   const store = {
-    get(k, d) { try { const v = localStorage.getItem("hlsm2:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem("hlsm2:" + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+    get(k, d) { try { const v = localStorage.getItem("hlsm3:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("hlsm3:" + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
   };
   const saved = store.get("opts", {});
   const state = {
     files: { club: null, prof: null, lecture: null }, names: {}, usingSample: false, columns: { club: {}, prof: {}, lecture: {} },
     opts: { plan: Engine.MODES[saved.plan] ? saved.plan : DEFAULTS.plan, levels: Object.assign({}, STANDARD_LEVELS, saved.levels || {}) },
-    pins: [], step: "upload", view: "clubs", q: "", sel: null, selProf: null, result: null, uploadMsg: null, setTab: "plan",
+    pins: [], step: "home", view: "clubs", q: "", sel: null, selProf: null, result: null, uploadMsg: null,
+    setTab: "prio", planView: "cards", issueView: "all", resTab: "month", example: null,
   };
 
   const weightsFrom = (levels) => Object.fromEntries(Object.entries(PRIORITY).map(([k, p]) => [k, p[3][Math.max(0, LEVELS.indexOf(levels[k]))]]));
+  function levelsFrom(weights) {
+    const out = {};
+    for (const [k, p] of Object.entries(PRIORITY)) {
+      const v = Number(weights[k] ?? weightsFrom(STANDARD_LEVELS)[k]);
+      let best = 0;
+      p[3].forEach((x, i) => { if (Math.abs(x - v) < Math.abs(p[3][best] - v)) best = i; });
+      out[k] = LEVELS[best];
+    }
+    return out;
+  }
   const changedLevels = () => Object.entries(state.opts.levels).filter(([k, v]) => v !== STANDARD_LEVELS[k]);
 
   function toast(msg) {
@@ -427,15 +568,35 @@ const SAMPLE = /*SAMPLE*/;
         }
       } catch (e) { state.result = { error: e.message }; }
     }
-    if (state.step !== "upload" && !ready()) state.step = "upload";
+    if (state.step !== "upload" && state.step !== "home" && !ready()) state.step = "upload";
     render();
   }
 
+  // Every plan on the current files and priorities (cached until something changes).
   function allPlans() {
     const r = R();
-    if (!r || !r.data || !r.plan) return [];
-    const run = Engine.runPlans(r.data, weightsFrom(state.opts.levels), PLAN_ORDER, state.pins);
-    return PLAN_ORDER.map((k) => run.plans[k]);
+    if (!r || !r.plan) return [];
+    if (!r.all) {
+      const run = Engine.runPlans(r.data, weightsFrom(state.opts.levels), PLAN_ORDER, state.pins);
+      r.all = PLAN_ORDER.map((k) => run.plans[k]);
+    }
+    return r.all;
+  }
+  // The current plan with standard priorities and no hand-picked speakers, to show what tweaks changed.
+  function baseline() {
+    const r = R();
+    if (!r.base) r.base = Engine.runPlans(r.data, weightsFrom(STANDARD_LEVELS), [state.opts.plan], []).plans[state.opts.plan];
+    return r.base;
+  }
+  // Plans for the landing page: the files already added, or this year's files as an example.
+  function examplePlans() {
+    if (ready()) return { plans: allPlans(), source: state.usingSample ? "this year's 2026 files" : "your files" };
+    if (typeof SAMPLE === "undefined" || !SAMPLE) return null;
+    if (!state.example) {
+      const run = Engine.runPlans(Engine.loadInputs(SAMPLE), weightsFrom(STANDARD_LEVELS), PLAN_ORDER, []);
+      state.example = PLAN_ORDER.map((k) => run.plans[k]);
+    }
+    return { plans: state.example, source: "this year's 2026 files" };
   }
 
   function pin(clubId, prof) {
@@ -450,19 +611,22 @@ const SAMPLE = /*SAMPLE*/;
 
   // ======================================================== frame
   function renderSteps() {
+    const nav = $("#steps");
+    nav.hidden = state.step === "home";
+    if (nav.hidden) return;
     const order = STEPS.map((s) => s[0]);
     const cur = order.indexOf(state.step);
-    $("#steps").innerHTML = STEPS.map(([k, what, hint], i) => {
+    nav.innerHTML = STEPS.map(([k, what, hint], i) => {
       const done = i < cur && ready();
       const locked = i > 0 && !ready();
       return `<button type="button" class="step ${done ? "done" : ""}" data-step="${k}" ${state.step === k ? 'aria-current="step"' : ""} ${locked ? "disabled" : ""}>
         <span class="num">${done ? "✓" : i + 1}</span><span style="min-width:0"><span class="what">${what}</span><span class="hint">${hint}</span></span></button>`;
     }).join("");
-    $$("[data-step]").forEach((b) => b.onclick = () => go(b.dataset.step));
+    $$("[data-step]", nav).forEach((b) => b.onclick = () => go(b.dataset.step));
   }
 
   function go(step) {
-    if (step !== "upload" && !ready()) return;
+    if (step !== "upload" && step !== "home" && !ready()) return;
     state.step = step;
     render();
     $("#stage").scrollTop = 0;
@@ -480,8 +644,122 @@ const SAMPLE = /*SAMPLE*/;
   function render() {
     renderSteps();
     const s = $("#stage");
-    s.innerHTML = { upload: stepUpload, review: stepReview, fix: stepFix, download: stepDownload }[state.step]();
+    s.innerHTML = { home: pageHome, upload: stepUpload, plan: stepPlan, review: stepReview, fix: stepFix, results: stepResults }[state.step]();
     wire(s);
+  }
+
+  // ======================================================== charts (one series, labelled bars)
+  function bars(items, opts = {}) {
+    if (!items.length) return `<p class="muted small">Nothing to show yet.</p>`;
+    const max = Math.max(1, ...items.map((x) => x.value));
+    return `<div class="bars">${items.map((x) => `<div class="bar-row${x.hi ? " hi" : ""}" title="${esc(x.label)}: ${x.value}${opts.unit ? " " + opts.unit : ""}">
+      <span class="bar-l">${esc(x.label)}</span><span class="bar-t"><i style="width:${(100 * x.value / max).toFixed(1)}%"></i></span><span class="bar-v">${x.value}</span></div>`).join("")}</div>`;
+  }
+  const countsOf = (values, order) => {
+    const c = new Map();
+    for (const v of values) if (v) c.set(v, (c.get(v) || 0) + 1);
+    const keys = order ? order.filter((k) => c.has(k)) : [...c.keys()].sort((a, b) => c.get(b) - c.get(a) || (a < b ? -1 : 1));
+    return keys.map((k) => ({ label: k, value: c.get(k) }));
+  };
+
+  // ======================================================== plan comparison
+  function leaders(plans) {
+    const out = {};
+    for (const [k, , higher] of MEASURES) {
+      const vals = plans.map((p) => p.summary[k]);
+      const target = higher ? Math.max(...vals) : Math.min(...vals);
+      out[k] = vals.every((v) => v === target) ? new Set() : new Set(plans.filter((p) => p.summary[k] === target).map((p) => p.key));
+    }
+    return out;
+  }
+  const COMPARE = {
+    clubs_matched: (n) => `${plural(n, "more club gets", "more clubs get")} a speaker`,
+    first_choice_lectures: (n) => `${plural(n, "more club gets", "more clubs get")} the talk they ranked 1st`,
+    requested_lecture_matches: (n) => `${plural(n, "more club gets", "more clubs get")} a talk they asked for`,
+    repeat_speakers: (n) => `${plural(n, "fewer repeat speaker")}`,
+    profs_used: (n) => `${plural(n, "more professor shares", "more professors share")} the talks`,
+    max_events_per_prof: (n) => `the busiest professor gives ${plural(n, "fewer talk")}`,
+  };
+  const COMPARE_COST = {
+    clubs_matched: (n) => `${plural(n, "more club gets", "more clubs get")} a speaker`,
+    first_choice_lectures: (n) => `${plural(n, "more club gets", "more clubs get")} their 1st choice`,
+    requested_lecture_matches: (n) => `${plural(n, "more club gets", "more clubs get")} a talk they asked for`,
+    repeat_speakers: (n) => `there ${n === 1 ? "is" : "are"} ${plural(n, "fewer repeat speaker")}`,
+    profs_used: (n) => `${plural(n, "more professor shares", "more professors share")} the talks`,
+    max_events_per_prof: (n) => `the busiest professor gives ${plural(n, "fewer talk")}`,
+  };
+  function whyBox(plans) {
+    const top = plans.find((p) => p.key === "recommended");
+    if (!top) return "";
+    const lines = [];
+    for (const other of plans) {
+      if (other === top || other.key === "legacy_greedy") continue;
+      const gains = [], costs = [];
+      for (const [k, , higher] of MEASURES) {
+        const d = top.summary[k] - other.summary[k];
+        if (!d) continue;
+        if (higher ? d > 0 : d < 0) gains.push(COMPARE[k](Math.abs(d)));
+        else costs.push(COMPARE_COST[k](Math.abs(d)));
+      }
+      if (gains.length) lines.push(`<li>Compared with <b>${esc(other.label)}</b>: ${gains.join("; ")}.${costs.length ? ` <span class="muted">Trade-off: with ${esc(other.label)}, ${costs.join("; ")}.</span>` : ""}</li>`);
+    }
+    return lines.length ? `<div class="why"><b>Why Recommended?</b> Not sure which to choose? Start with Recommended. Here's what it gains, in numbers:<ul>${lines.join("")}</ul></div>` : "";
+  }
+
+  function compareTable(plans, opts = {}) {
+    const lead = leaders(plans), total = plans[0].summary.clubs_total;
+    return `<div class="ctable-wrap"><table class="ctable">
+      <thead><tr><th></th>${plans.map((p) => `<th class="${p.key === "recommended" ? "rec" : ""}${opts.pick && p.key === state.opts.plan ? " cur" : ""}">${esc(p.label)}</th>`).join("")}</tr></thead>
+      <tbody>${MEASURES.map(([k, label]) => `<tr><th>${label}</th>${plans.map((p) => {
+        const v = p.summary[k], win = lead[k].has(p.key);
+        return `<td class="${p.key === "recommended" ? "rec" : ""}${win ? " win" : ""}">${win ? `<span class="star" aria-label="best">★</span>` : ""}${v}${k === "clubs_matched" ? `<small> of ${total}</small>` : ""}</td>`;
+      }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
+
+  function planCard(p, lead, opts = {}) {
+    const wins = MEASURES.filter(([k]) => lead[k].has(p.key)).map((m) => m[3]);
+    const s = p.summary, base = opts.base && opts.base[p.key];
+    const delta = (k, higher) => {
+      if (!base) return "";
+      const d = s[k] - base.summary[k];
+      return d ? `<span class="d ${(d > 0) === higher ? "good" : "bad"}">${d > 0 ? "+" : "−"}${Math.abs(d)}</span>` : "";
+    };
+    return `<label class="pcard${p.key === "recommended" ? " rec" : ""}">
+      <input type="radio" name="plan" value="${p.key}" ${state.opts.plan === p.key ? "checked" : ""}>
+      <span class="pcard-h"><b>${esc(p.label)}</b>${p.key === "recommended" ? `<span class="tag gold">Suits most years</span>` : ""}</span>
+      <span class="sub">${esc(BLURB[p.key] || p.description)}</span>
+      <span class="best">${wins.length ? `<b>Best for</b> ${wins.join(", ")}` : `<span class="muted">Doesn't lead on any measure</span>`}</span>
+      <span class="pnums">${MEASURES.map(([k, label, higher, , short]) => `<span class="${lead[k].has(p.key) ? "win" : ""}" title="${label}"><em>${short}</em><b>${lead[k].has(p.key) ? "★ " : ""}${s[k]}</b>${delta(k, higher)}</span>`).join("")}</span>
+    </label>`;
+  }
+
+  // ======================================================== home
+  function pageHome() {
+    const ex = examplePlans();
+    let outcomes;
+    if (ex) {
+      outcomes = `<div class="card"><div class="card-h"><h2>What the different plans give you</h2><span class="sub">Using ${esc(ex.source)}</span></div>
+        <div class="card-b" style="display:grid;gap:14px">
+          <p class="muted small">There are several ways to share out speakers. Each column is a complete plan. A gold ★ marks the plan that does best on each line.</p>
+          ${compareTable(ex.plans)}
+          ${whyBox(ex.plans)}
+        </div></div>`;
+    } else {
+      outcomes = `<div class="card"><div class="card-h"><h2>The plans you can choose from</h2></div>
+        <div class="card-b"><div class="plist">${PLAN_ORDER.map((k) => `<div><b>${esc(Engine.MODES[k].label)}</b>${k === "recommended" ? ` <span class="tag gold">Recommended</span>` : ""}<div class="sub">${esc(BLURB[k])}</div></div>`).join("")}</div>
+        <p class="small muted" style="margin-top:12px">Add your spreadsheets and this page shows how many clubs each plan serves, side by side.</p></div></div>`;
+    }
+    return `<div class="stage-inner home">
+      <section class="hero">
+        <div class="kicker">Notre Dame Alumni Association · Hesburgh Lecture Series</div>
+        <h1>Find the right faculty speaker for every alumni club</h1>
+        <p>Add the three planning spreadsheets. The matcher suggests a speaker and a month for every club that asked for a lecture, explains each choice, and gives you a finished Excel plan.</p>
+        <div class="hero-steps">${STEPS.map(([, what, hint], i) => `<div><span class="num">${i + 1}</span><b>${what}</b><span class="sub">${hint}</span></div>`).join("")}</div>
+        <div class="hero-cta"><button class="btn primary big" type="button" data-go="upload">${ready() ? "Continue matching" : "Start matching"} →</button>
+          <span class="small muted">Nothing to install. Your files stay on this computer.</span></div>
+      </section>
+      ${outcomes}
+    </div>`;
   }
 
   // ======================================================== step 1
@@ -526,7 +804,7 @@ const SAMPLE = /*SAMPLE*/;
     let banner = "";
     if (state.uploadMsg) banner = `<div class="banner err">${esc(state.uploadMsg)}</div>`;
     else if (r && r.error) banner = `<div class="banner err">These files couldn't be read: ${esc(r.error)}.</div>`;
-    else if (ready()) banner = `<div class="banner"><span>All three files are in. ${r.plan.summary.clubs_matched} of ${r.plan.summary.clubs_total} clubs already have a suggested speaker.</span><button class="btn primary small" type="button" data-go="review">Review the matches →</button></div>`;
+    else if (ready()) banner = `<div class="banner"><span>All three files are in. Next, choose which plan you'd like.</span><button class="btn primary small" type="button" data-go="plan">Choose a plan →</button></div>`;
     const fixer = r && r.data && !r.plan ? missingColumnsCard() : "";
     const body = `${banner}${fixer}
       <div class="upload">
@@ -558,11 +836,28 @@ const SAMPLE = /*SAMPLE*/;
         </div>
       </div>`;
     return frame("Step 1: Add the three planning spreadsheets", body,
-      "This tool suggests a faculty speaker for every alumni club that asked for a Hesburgh Lecture. To begin, add the club requests, the faculty responses and the lecture list. Matching starts as soon as all three are in.",
-      null, ["review", "Next: Review matches", !ready()]);
+      "Add the club requests, the faculty responses and the lecture list. Matching starts as soon as all three are in.",
+      ["home", "Home"], ["plan", "Next: Choose a plan", !ready()]);
   }
 
-  // ======================================================== step 2
+  // ======================================================== step 2: choose a plan
+  function stepPlan() {
+    const plans = allPlans(), lead = leaders(plans);
+    const toggle = `<div class="seg" role="group" aria-label="Show plans as"><button type="button" data-planview="cards" aria-pressed="${state.planView === "cards"}">Side by side</button><button type="button" data-planview="charts" aria-pressed="${state.planView === "charts"}">As charts</button></div>`;
+    let body;
+    if (state.planView === "charts") {
+      const chart = (k, title, note) => `<div class="card"><div class="card-h"><h2>${title}</h2><span class="sub">${note}</span></div><div class="card-b">${bars(plans.map((p) => ({ label: p.label, value: p.summary[k], hi: p.key === state.opts.plan })))}</div></div>`;
+      body = `<div class="charts2">${chart("clubs_matched", "Clubs that get a speaker", "More is better")}${chart("first_choice_lectures", "Clubs getting the talk they ranked 1st", "More is better")}${chart("repeat_speakers", "Repeat speakers", "Fewer is better")}${chart("profs_used", "Faculty giving at least one talk", "More shares the work")}</div>
+        <p class="small muted">The highlighted bar is the plan you've picked. Switch to “Side by side” to pick a different one.</p>`;
+    } else {
+      body = `<div class="pcards">${plans.map((p) => planCard(p, lead)).join("")}</div>${whyBox(plans)}`;
+    }
+    return frame("Step 2: Choose a plan", `<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted">A gold ★ shows which plan does best on each line.</span>${toggle}</div>${body}`,
+      "Each plan below is a complete set of matches for your files, made with a different goal in mind. Pick one. Recommended suits most years. You can change your mind at any time.",
+      ["upload", "Back"], ["review", "Next: Review matches"]);
+  }
+
+  // ======================================================== step 3: review
   function stepReview() {
     const s = R().plan.summary;
     const stats = `<div class="stats">
@@ -571,9 +866,9 @@ const SAMPLE = /*SAMPLE*/;
       <div class="card stat"><span>Clubs that need your help</span><b>${s.clubs_unmatched}</b>${s.clubs_unmatched ? `<button class="link" type="button" data-go="fix">See what to do →</button>` : ""}</div>
     </div>`;
     const body = stats + (state.view === "clubs" ? reviewClubs() : reviewProfs());
-    return frame("Step 2: Review the suggested speakers", body,
-      "Click any club to see who was picked and why. If you'd rather send someone else, choose from the other speakers who fit, and the rest of the plan adjusts automatically. Nothing is final until you download it in Step 4.",
-      ["upload", "Back"], ["fix", "Next: Fix problems"]);
+    return frame(`Step 3: Review the ${esc(R().plan.label)} plan`, body,
+      "Click any club to see who was picked and why. If you'd rather send someone else, choose from the other speakers who fit, and the rest of the plan adjusts automatically.",
+      ["plan", "Back"], ["fix", "Next: Fix problems"]);
   }
 
   function viewToggle() {
@@ -707,13 +1002,13 @@ const SAMPLE = /*SAMPLE*/;
     </div>`;
   }
 
-  // ======================================================== step 3
+  // ======================================================== step 4: fix
   const PROBLEMS = {
     "No request form submitted": ["These clubs didn't send a request form", ["Contact each club to see whether they'd like a speaker this year.", "If they would, suggest one of the speakers below who still have open slots (speakers who asked to visit that city are listed first).", "Or add their request to the club spreadsheet and add it again in Step 1. Everything re-matches automatically."], "bad"],
     "Missing availability": ["These clubs didn't say which months they can host", ["Contact each club and ask which months work.", "Add the months to the Availability column in the club spreadsheet, then add it again in Step 1."], "bad"],
     "No themes or lectures requested": ["These clubs didn't pick a talk or topic", ["Ask each club to choose up to five talks from the lecture list.", "Add them to the club spreadsheet, then add it again in Step 1."], "bad"],
     "All suitable professors are fully booked": ["Good speakers exist, but they're already fully booked", ["Book one of the speakers below anyway (the club they move from gets a new suggestion), or", "ask a speaker whether they could do one more event, then raise their number in the faculty spreadsheet."], "warn"],
-    "Left out so suitable professors are not overloaded": ["A speaker fits, but would be taking on an extra talk", ["The plan held back so faculty aren't overloaded. If you're happy for a speaker to do more, book them below.", "To do this automatically, lower “Share talks across faculty” in Settings."], "warn"],
+    "Left out so suitable professors are not overloaded": ["A speaker fits, but would be taking on an extra talk", ["The plan held back so faculty aren't overloaded. If you're happy for a speaker to do more, book them below.", "To do this automatically, lower “Share talks across faculty” on the Final plan page."], "warn"],
     "No shared months with any professor": ["No speaker is free in the months these clubs picked", ["Ask the club whether other months would work, or ask a speaker about their availability."], "warn"],
     "No content overlap with any available professor": ["No speaker offers what these clubs asked for", ["Ask the club to pick a different talk from the lecture list. The closest speakers are listed."], "warn"],
   };
@@ -731,6 +1026,19 @@ const SAMPLE = /*SAMPLE*/;
       ${bookable ? `<button class="btn small" type="button" data-pin="${esc(u.club.id)}" data-prof="${esc(name)}">Book this speaker</button>` : `<span class="tag plain">${note.startsWith("still free") ? "Suggest to the club" : "Not a full fit"}</span>`}</div>`;
   }
 
+  const ISSUE_TYPES = [["all", "Everything"], ["error", "Must fix"], ["warning", "Worth a look"], ["info", "For your information"]];
+  function issuesCard(data) {
+    const issues = Engine.dataIssues(data);
+    const counts = { all: issues.length };
+    for (const i of issues) counts[i.severity] = (counts[i.severity] || 0) + 1;
+    const shown = issues.filter((i) => state.issueView === "all" || i.severity === state.issueView);
+    const tone = { error: "bad", warning: "warn", info: "plain" };
+    return `<div class="card"><div class="card-h"><h2>Things we noticed in your spreadsheets</h2>
+        <div class="seg" role="group" aria-label="Show">${ISSUE_TYPES.filter(([k]) => counts[k]).map(([k, l]) => `<button type="button" data-issues="${k}" aria-pressed="${state.issueView === k}">${l} (${counts[k]})</button>`).join("")}</div></div>
+      <div class="card-b">${shown.length ? `<table class="list issues"><tbody>${shown.map((i) => `<tr><td style="width:1%"><span class="tag ${tone[i.severity]}">${ISSUE_TYPES.find((t) => t[0] === i.severity)[1]}</span></td><td><b>${esc(i.subject)}</b><div class="sub">${esc(i.message)}</div></td></tr>`).join("")}</tbody></table>` : `<p class="muted">Nothing here. The spreadsheets look clean.</p>`}
+      <p class="small muted" style="margin-top:10px">Names spelled differently between files were matched for you. Fixing the spelling in the spreadsheets keeps next year's run clean.</p></div></div>`;
+  }
+
   function stepFix() {
     const { plan, data } = R();
     const groups = {};
@@ -746,53 +1054,68 @@ const SAMPLE = /*SAMPLE*/;
           ${u.suggestions.length ? `<div class="options">${u.suggestions.map(([n, note]) => suggestionLine(u, n, note)).join("")}</div>` : ""}</details>`).join("")}
       </div>`;
     }).join("");
-    const issues = Engine.dataIssues(data);
-    const fixed = issues.filter((i) => i.kind === "name_mismatch");
-    const warns = issues.filter((i) => (i.severity === "error" || i.severity === "warning") && i.kind !== "name_mismatch" && i.kind !== "missing_availability");
-    const info = issues.filter((i) => i.severity === "info");
-    const line = (i) => `<li><b>${esc(i.subject)}:</b> ${esc(i.message)}</li>`;
-    const notes = `<div class="card"><div class="card-h"><h2>Things we noticed in your spreadsheets</h2></div>
-      <div class="card-b" style="display:grid;gap:14px">
-        ${warns.length ? `<div><b>Please check</b><ul class="notes">${warns.map(line).join("")}</ul></div>` : ""}
-        ${fixed.length ? `<details class="more"><summary>${plural(fixed.length, "name was", "names were")} spelled differently between files. We matched them up for you.</summary><ul class="notes">${fixed.map(line).join("")}</ul>
-          <p class="small muted" style="margin-top:8px">No action needed. Correcting the spelling in the spreadsheets will keep next year's run clean.</p></details>` : ""}
-        ${info.length ? `<details class="more"><summary>${plural(info.length, "other note")}, for your information</summary><ul class="notes">${info.map(line).join("")}</ul></details>` : ""}
-        ${!warns.length && !fixed.length ? `<p class="muted">Nothing to check. The spreadsheets look clean.</p>` : ""}
-      </div></div>`;
     const pinNotes = plan.pin_notes.length ? `<div class="banner err">${plan.pin_notes.map(esc).join(" ")}</div>` : "";
     const body = plan.unmatched.length
-      ? `${pinNotes}<div class="fixes">${blocks}${notes}</div>`
-      : `${pinNotes}<div class="banner">Every club has a speaker. There's nothing to fix.</div>${notes}`;
+      ? `${pinNotes}<div class="fixes">${blocks}${issuesCard(data)}</div>`
+      : `${pinNotes}<div class="banner">Every club has a speaker. There's nothing to fix.</div>${issuesCard(data)}`;
     const n = plan.unmatched.length;
-    return frame("Step 3: Help the clubs that don't have a speaker yet", body,
-      n ? `${plural(n, "club")} couldn't be matched. They're grouped by reason below, with what to do for each. You can also go on to Step 4 and handle these later.` : "Every club has a suggested speaker.",
-      ["review", "Back"], ["download", "Next: Download"]);
+    return frame("Step 4: Help the clubs that don't have a speaker yet", body,
+      n ? `${plural(n, "club")} couldn't be matched. They're grouped by reason below, with what to do for each. You can also go on and handle these later.` : "Every club has a suggested speaker.",
+      ["review", "Back"], ["results", "Next: Final plan"]);
   }
 
-  // ======================================================== step 4
-  function stepDownload() {
-    const { plan } = R(), s = plan.summary, changed = changedLevels();
-    const body = `<div class="dl">
-      <div class="card"><div class="card-h"><h2>Excel workbook</h2><span class="tag gold">Recommended</span></div>
-        <div class="card-b"><p>One file with everything, ready to share with the team:</p>
-          <ul><li><b>Summary:</b> totals and the settings used</li><li><b>Matches:</b> each club, its speaker, suggested month, talk and backups</li><li><b>Needs attention:</b> clubs without a speaker, why, and who to try</li><li><b>Faculty:</b> how many events each speaker has</li><li><b>Plan comparison:</b> how the other plans would have done</li><li><b>Data check:</b> spelling fixes and warnings</li></ul>
-          <div><button class="btn primary" type="button" id="dl-xlsx">Download Excel workbook</button></div>
+  // ======================================================== step 5: final plan, tweak and download
+  function tweakPanel() {
+    const lv = state.opts.levels, preset = matchingPreset(lv);
+    return `<div class="card tweak"><div class="card-h"><h2>Fine-tune</h2>${changedLevels().length ? `<button class="link small" type="button" id="t-reset">Back to standard</button>` : `<span class="tag good">Standard</span>`}</div>
+      <div class="card-b tweak-b">
+        <p class="small muted">Change anything here and the plan, numbers and charts update straight away.</p>
+        <label class="colpick"><span>Plan</span><select id="t-plan">${PLAN_ORDER.map((k) => `<option value="${k}" ${state.opts.plan === k ? "selected" : ""}>${esc(Engine.MODES[k].label)}</option>`).join("")}</select></label>
+        <label class="colpick"><span>Quick setting</span><select id="t-preset"><option value="" ${preset ? "" : "selected"}>Custom</option>${Object.keys(PRESETS).map((n) => `<option ${preset === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        ${PRIORITIES.map(([, title, items]) => `<details class="tgroup"><summary>${title}</summary>${items.map(([k, label, summary, , explain]) => `<div class="prio">
+          <div class="prio-h"><span><b>${esc(label)}</b><span class="sub">${esc(summary)}</span></span>
+            <select data-level="${k}" aria-label="${esc(label)}">${LEVELS.map((l) => `<option ${lv[k] === l ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+          <details class="what"><summary>What does this do?</summary><p>${esc(explain)}</p></details></div>`).join("")}</details>`).join("")}
+        <div class="tweak-io"><button class="btn small" type="button" id="save-settings">Save my settings</button><button class="btn small" type="button" id="load-settings">Load saved settings</button></div>
+      </div></div>`;
+  }
+
+  function stepResults() {
+    const { plan } = R(), s = plan.summary, base = baseline(), b = base.summary;
+    const delta = (k, higher) => { const d = s[k] - b[k]; return d ? `<span class="d ${(d > 0) === higher ? "good" : "bad"}" title="Compared with standard settings">${d > 0 ? "+" : "−"}${Math.abs(d)}</span>` : ""; };
+    const basePairs = new Map(base.matches.map((m) => [m.pair.club.id, m.pair.prof.name]));
+    const changed = plan.matches.filter((m) => basePairs.get(m.pair.club.id) !== m.pair.prof.name).length
+      + base.matches.filter((m) => !plan.matches.some((x) => x.pair.club.id === m.pair.club.id)).length;
+    const kpis = `<div class="kpis">
+      <div class="card stat"><span>Clubs with a speaker</span><b>${s.clubs_matched}${delta("clubs_matched", true)} <small>of ${s.clubs_total}</small></b></div>
+      <div class="card stat"><span>Got the talk they ranked 1st</span><b>${s.first_choice_lectures}${delta("first_choice_lectures", true)}</b></div>
+      <div class="card stat"><span>Repeat speakers</span><b>${s.repeat_speakers}${delta("repeat_speakers", false)}</b></div>
+      <div class="card stat"><span>Faculty giving talks</span><b>${s.profs_used}${delta("profs_used", true)}</b></div></div>`;
+    const ms = plan.matches;
+    const tabs = [["month", "Talks by month"], ["choice", "Club's ranking of its talk"], ["region", "Talks by region"], ["busy", "Busiest professors"]];
+    const chart = {
+      month: () => bars(countsOf(ms.map((m) => m.suggested_month), MONTHS), { unit: "talks" }),
+      choice: () => bars(countsOf(ms.map((m) => (m.pair.lectures.length ? Engine.ordinal(m.pair.lectures[0][0]) + " choice" : "Same topic, other talk")), ["1st choice", "2nd choice", "3rd choice", "4th choice", "5th choice", "Same topic, other talk"]), { unit: "clubs" }),
+      region: () => bars(countsOf(ms.map((m) => m.pair.club.region || "No region")), { unit: "talks" }),
+      busy: () => bars(countsOf(ms.map((m) => m.pair.prof.name)).slice(0, 10), { unit: "talks" }),
+    }[state.resTab]();
+    const changedLine = changed || changedLevels().length || state.pins.length
+      ? `<p class="small muted">${changed ? `${plural(changed, "club has", "clubs have")} a different speaker than the ${esc(plan.label)} plan with standard settings.` : (state.opts.plan === "recommended" ? "Your changes didn't move any speakers. Recommended always serves the most clubs and 1st choices first, so priorities only break ties. Pick Best fit or Balanced under Plan to see priorities make a bigger difference." : "Your changes didn't move any speakers.")} The small green and red numbers compare with standard settings.</p>` : "";
+    const body = `<div class="results">
+      ${tweakPanel()}
+      <div class="res-main">
+        ${kpis}
+        ${changedLine}
+        <div class="card dlcard"><div class="card-b dlrow">
+          <div><b>Download the final plan</b><div class="sub">One Excel file: matches, clubs that need attention, each speaker's load, all plans compared, a data check and the settings used.</div></div>
+          <div class="dlbtns"><button class="btn primary" type="button" id="dl-xlsx">Download Excel workbook</button><button class="btn small" type="button" id="dl-csv">Matches only (CSV)</button></div>
           <p class="small muted" id="dl-note" hidden>Saving files isn't available in this view. Open the page in your browser to download.</p></div></div>
-      <div class="card"><div class="card-h"><h2>What you're saving</h2></div>
-        <div class="card-b"><dl class="facts">
-          <dt>Plan</dt><dd>${esc(plan.label)}</dd>
-          <dt>Clubs with a speaker</dt><dd>${s.clubs_matched} of ${s.clubs_total}</dd>
-          <dt>Got the talk they ranked 1st</dt><dd>${s.first_choice_lectures}</dd>
-          <dt>Faculty speaking</dt><dd>${s.profs_used}</dd>
-          <dt>Recent repeat speakers</dt><dd>${s.repeat_speakers}</dd>
-          <dt>Changes you made</dt><dd>${state.pins.length ? `${plural(state.pins.length, "speaker")} chosen by you` : "None"}</dd>
-          <dt>Priorities</dt><dd>${changed.length ? changed.map(([k, v]) => `${esc(PRIORITY[k][1])}: ${v}`).join("; ") : "Standard"}</dd>
-          <dt>Files used</dt><dd>${state.usingSample ? "2026 files" : FILES.map(([k]) => esc(state.names[k] || "")).join(", ")}</dd></dl>
-          <div><button class="btn small" type="button" id="dl-csv">Download matches only (CSV)</button></div>
-        </div></div>
-    </div>`;
-    return frame("Step 4: Save the results", body,
-      "Download the plan to share it or keep a record. If you change anything later, come back here and download again.",
+        <div class="card"><div class="card-h"><h2>The ${esc(plan.label)} plan at a glance</h2>
+          <div class="seg" role="group" aria-label="Chart">${tabs.map(([k, l]) => `<button type="button" data-restab="${k}" aria-pressed="${state.resTab === k}">${l}</button>`).join("")}</div></div>
+          <div class="card-b chart-b">${chart}</div></div>
+      </div></div>`;
+    return frame("Step 5: Your final plan", body,
+      "Here's the finished plan. Try different settings under Fine-tune to see what works best: the numbers and charts update as you go. When you're happy, download it.",
       ["fix", "Back"], null);
   }
 
@@ -808,43 +1131,9 @@ const SAMPLE = /*SAMPLE*/;
   function closeModal() { $("#overlay").hidden = true; $("#overlay").innerHTML = ""; }
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#overlay").hidden) closeModal(); });
 
-  // What the first plan gains over each other plan, in numbers.
-  const COMPARE = [
-    ["clubs_matched", true, (n) => `${plural(n, "more club gets", "more clubs get")} a speaker`],
-    ["first_choice_lectures", true, (n) => `${plural(n, "more club gets", "more clubs get")} their 1st-choice talk`],
-    ["requested_lecture_matches", true, (n) => `${plural(n, "more club gets", "more clubs get")} a talk they asked for`],
-    ["repeat_speakers", false, (n) => `${plural(n, "fewer repeat speaker")}`],
-    ["profs_used", true, (n) => `${plural(n, "more professor shares", "more professors share")} the talks`],
-  ];
-  function whyBox(plans) {
-    const top = plans.find((p) => p.key === "recommended");
-    if (!top) return "";
-    const lines = [];
-    for (const other of plans) {
-      if (other === top) continue;
-      const gains = [], costs = [];
-      for (const [k, higher, phrase] of COMPARE) {
-        const d = top.summary[k] - other.summary[k];
-        if (!d) continue;
-        ((higher ? d > 0 : d < 0) ? gains : costs).push(phrase(Math.abs(d)));
-      }
-      if (gains.length) lines.push(`<li>Compared with <b>${esc(other.label)}</b>: ${gains.join("; ")}.${costs.length ? ` <span class="muted">Trade-off: ${other.label} has ${costs.join("; ").replace(/more|fewer/g, (w) => (w === "more" ? "fewer" : "more"))}.</span>` : ""}</li>`);
-    }
-    return lines.length ? `<div class="why"><b>Why Recommended?</b> Not sure which to choose? Start with Recommended. Here's what it gains, in numbers:<ul>${lines.join("")}</ul></div>` : "";
-  }
-
-  function settingsPlan(plans) {
-    const s = (p) => p.summary;
-    return `<div class="q"><b>Which plan should the matcher make?</b><div class="plans">
-      ${plans.map((p) => `<label class="radio"><input type="radio" name="plan" value="${p.key}" ${state.opts.plan === p.key ? "checked" : ""}><span><b>${esc(p.label)}${p.key === "recommended" ? ` <span class="tag gold">Recommended</span>` : ""}</b>
-        <span class="sub">${esc(p.description)}</span>
-        <span class="nums"><span>${s(p).clubs_matched} clubs with a speaker</span><span>${s(p).first_choice_lectures} got their 1st-choice talk</span><span>${plural(s(p).repeat_speakers, "repeat speaker")}</span><span>${s(p).profs_used} faculty speaking</span></span></span></label>`).join("")}</div>
-      ${whyBox(plans)}</div>`;
-  }
-
-  function settingsPriorities() {
-    const lv = state.opts.levels;
-    return `<p class="muted small">These decide who wins when two clubs want the same speaker. “Standard” is what most people should use.</p>
+  function settingsPriorities(lv, preset) {
+    return `<div class="q"><b>Quick setting</b><select id="m-preset" class="wide-select"><option value="" ${preset ? "" : "selected"}>Custom</option>${Object.keys(PRESETS).map((n) => `<option ${preset === n ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <span class="small muted">These decide who wins when two clubs want the same speaker. “Standard” is what most people should use.</span></div>
       ${PRIORITIES.map(([, title, items]) => `<div class="q"><b>${title}</b><div class="prios">${items.map(([k, label, summary, , explain]) => `<div class="prio">
         <div class="prio-h"><span><b>${esc(label)}</b><span class="sub">${esc(summary)}</span></span>
           <select data-level="${k}" aria-label="${esc(label)}">${LEVELS.map((l) => `<option ${lv[k] === l ? "selected" : ""}>${l}</option>`).join("")}</select></div>
@@ -860,41 +1149,35 @@ const SAMPLE = /*SAMPLE*/;
   }
 
   function openSettings() {
-    const plans = allPlans();
-    const tabs = [["plan", "Plan"], ["prio", "Priorities"], ["cols", "Spreadsheet columns"]];
-    const body = () => (state.setTab === "plan" ? (plans.length ? settingsPlan(plans) : `<p class="muted">Add your files in Step 1 to compare the plans side by side. You can still pick one now.</p>${settingsPlanNoData()}`)
-      : state.setTab === "prio" ? settingsPriorities() : settingsColumns());
+    const pending = { levels: Object.assign({}, state.opts.levels), columns: JSON.parse(JSON.stringify(state.columns)) };
+    const tabs = [["prio", "Priorities"], ["cols", "Spreadsheet columns"]];
+    const body = () => (state.setTab === "prio" ? settingsPriorities(pending.levels, matchingPreset(pending.levels)) : settingsColumns());
     const m = openModal(`<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="set-t">
-      <div class="modal-h"><div><h2 id="set-t">Matching settings</h2><p class="muted small">Most people never need to change these. The recommended settings are already on.</p></div><button class="x" type="button" data-close aria-label="Close">×</button></div>
+      <div class="modal-h"><div><h2 id="set-t">Settings</h2><p class="muted small">Most people never need to change these. The recommended settings are already on.</p></div><button class="x" type="button" data-close aria-label="Close">×</button></div>
       <div class="modal-tabs seg" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" data-settab="${k}" aria-pressed="${state.setTab === k}">${l}</button>`).join("")}</div>
       <div class="modal-b" id="set-body">${body()}</div>
-      <div class="modal-f"><button class="btn" type="button" id="reset">Reset to recommended</button><button class="btn primary" type="button" id="apply">Apply settings</button></div>
+      <div class="modal-f"><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="reset">Back to standard</button><button class="btn" type="button" id="m-save">Save my settings</button><button class="btn" type="button" id="m-load">Load saved settings</button></span><button class="btn primary" type="button" id="apply">Apply</button></div>
     </div>`);
-    const pending = { plan: state.opts.plan, levels: Object.assign({}, state.opts.levels), columns: JSON.parse(JSON.stringify(state.columns)) };
     const bind = () => {
-      $$("input[name=plan]", m).forEach((r) => r.onchange = () => { pending.plan = r.value; });
-      $$("select[data-level]", m).forEach((s) => s.onchange = () => { pending.levels[s.dataset.level] = s.value; });
+      const pr = $("#m-preset", m);
+      if (pr) pr.onchange = () => { if (pr.value) { pending.levels = presetLevels(pr.value); $("#set-body", m).innerHTML = body(); bind(); } };
+      $$("select[data-level]", m).forEach((s) => s.onchange = () => { pending.levels[s.dataset.level] = s.value; const p = $("#m-preset", m); if (p) p.value = matchingPreset(pending.levels) || ""; });
       bindColumnPickers(m, pending.columns);
     };
     $$("[data-settab]", m).forEach((b) => b.onclick = () => {
       state.setTab = b.dataset.settab;
       $$("[data-settab]", m).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-      const save = { plan: state.opts.plan, levels: state.opts.levels };
-      state.opts.plan = pending.plan; state.opts.levels = pending.levels;
-      $("#set-body", m).innerHTML = body();
-      state.opts.plan = save.plan; state.opts.levels = save.levels;
-      bind();
+      $("#set-body", m).innerHTML = body(); bind();
     });
     bind();
-    $("#reset", m).onclick = () => { state.opts = JSON.parse(JSON.stringify(DEFAULTS)); closeModal(); rerun(); toast("Recommended settings restored"); };
+    $("#reset", m).onclick = () => { pending.levels = Object.assign({}, STANDARD_LEVELS); $("#set-body", m).innerHTML = body(); bind(); };
+    $("#m-save", m).onclick = () => saveSettings(pending.levels, pending.columns);
+    $("#m-load", m).onclick = () => { closeModal(); $("#settings-input").click(); };
     $("#apply", m).onclick = () => {
-      state.opts.plan = pending.plan; state.opts.levels = pending.levels; state.columns = pending.columns;
+      state.opts.levels = pending.levels; state.columns = pending.columns;
       closeModal(); rerun();
       toast(ready() ? "Settings applied. Matches updated." : "Settings saved");
     };
-  }
-  function settingsPlanNoData() {
-    return `<div class="q">${PLAN_ORDER.map((k) => `<label class="radio"><input type="radio" name="plan" value="${k}" ${state.opts.plan === k ? "checked" : ""}><span><b>${esc(Engine.MODES[k].label)}</b><span class="sub">${esc(Engine.MODES[k].description)}</span></span></label>`).join("")}</div>`;
   }
 
   function bindColumnPickers(scope, target) {
@@ -906,15 +1189,40 @@ const SAMPLE = /*SAMPLE*/;
     });
   }
 
+  // Settings files: {"plan", "weights", "columns"}. An old weights.json (just numbers) also loads.
+  function saveSettings(levels, columns) {
+    const doc = { plan: state.opts.plan, preset: matchingPreset(levels) || "Custom", levels, weights: weightsFrom(levels), columns };
+    save("hesburgh_settings.json", new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }));
+  }
+  async function loadSettings(file) {
+    try {
+      const doc = JSON.parse(await file.text());
+      if (!doc || typeof doc !== "object") throw new Error();
+      const raw = doc.weights || doc.columns || doc.levels ? doc.weights || {} : doc;
+      const old = { size_weight: "size", eng_weight: "engagement", title_weight: "title" };
+      const w = {};
+      for (const [k, v] of Object.entries(raw)) if (typeof v === "number" && PRIORITY[old[k] || k]) w[old[k] || k] = v;
+      state.opts.levels = doc.levels && typeof doc.levels === "object"
+        ? Object.assign({}, STANDARD_LEVELS, Object.fromEntries(Object.entries(doc.levels).filter(([k, v]) => PRIORITY[k] && LEVELS.includes(v))))
+        : levelsFrom(Object.assign(weightsFrom(STANDARD_LEVELS), w));
+      if (doc.plan && Engine.MODES[doc.plan]) state.opts.plan = doc.plan;
+      if (doc.columns && typeof doc.columns === "object") state.columns = Object.assign({ club: {}, prof: {}, lecture: {} }, doc.columns);
+      rerun();
+      toast(`Loaded settings from ${file.name}`);
+    } catch (e) { toast("That file isn't a settings file saved from this page."); }
+  }
+  $("#settings-input").addEventListener("change", (e) => { if (e.target.files[0]) loadSettings(e.target.files[0]); e.target.value = ""; });
+
   function openHelp() {
     openModal(`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-t">
       <div class="modal-h"><h2 id="help-t">How this works</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>
       <div class="modal-b">
-        <div class="help-sec"><h3>Four steps</h3><ol>
+        <div class="help-sec"><h3>Five steps</h3><ol>
           <li><b>Add files:</b> drag in the club requests, faculty responses and lecture list. Excel or CSV both work.</li>
+          <li><b>Choose a plan:</b> see how each plan works out for your files, side by side, and pick one.</li>
           <li><b>Review matches:</b> every club gets a suggested speaker and month. Click a club to see why, or choose someone else.</li>
           <li><b>Fix problems:</b> see which clubs have no speaker, and what to do about each.</li>
-          <li><b>Download:</b> save an Excel workbook to share with the team.</li></ol></div>
+          <li><b>Final plan:</b> fine-tune the priorities, watch the numbers change, and download an Excel workbook.</li></ol></div>
         <div class="help-sec"><h3>The rules every match follows</h3><ul>
           <li>The speaker and the club must both be free in at least one month.</li>
           <li>The speaker must offer a talk or topic the club asked for.</li>
@@ -924,26 +1232,40 @@ const SAMPLE = /*SAMPLE*/;
           <li>Then give each club the talk it ranked highest.</li>
           <li>Then avoid sending a club someone it heard in the last four years.</li>
           <li>Then share talks across faculty, honour travel wishes, and pick the best overall fit.</li></ol>
-          <p class="small muted">Each goal counts for more than everything below it. Other plans are in Settings, with their numbers side by side.</p></div>
+          <p class="small muted">Each goal counts for more than everything below it.</p></div>
         <div class="help-sec"><h3>Common questions</h3><ul>
-          <li><b>Why does a club have no speaker?</b> Usually the club didn't send a request form, or the speakers it wanted were fully booked. Step 3 says which.</li>
-          <li><b>Can I change a match?</b> Yes. In Step 2, click the club and pick from “Other speakers who could do this.” Everything else adjusts.</li>
+          <li><b>Why does a club have no speaker?</b> Usually the club didn't send a request form, or the speakers it wanted were fully booked. Step 4 says which.</li>
+          <li><b>Can I change a match?</b> Yes. In Step 3, click the club and pick from “Other speakers who could do this.” Everything else adjusts.</li>
+          <li><b>Can I keep my settings for next year?</b> Yes. Use “Save my settings” on the Final plan page or in Settings, and load the file next time.</li>
           <li><b>A column in our spreadsheet has a new name.</b> Small changes are handled automatically. If one can't be found, Step 1 asks you to pick it.</li>
-          <li><b>Are my files uploaded anywhere?</b> No. Everything happens in this browser window.</li>
-          <li><b>Names are spelled differently in two spreadsheets.</b> Close spellings are matched automatically and listed in Step 3.</li></ul></div>
+          <li><b>Are my files uploaded anywhere?</b> No. Everything happens in this browser window.</li></ul></div>
       </div>
       <div class="modal-f"><span></span><button class="btn primary" type="button" data-close>Got it</button></div>
     </div>`);
   }
   $("#open-settings").onclick = openSettings;
   $("#open-help").onclick = openHelp;
+  $("#go-home").onclick = () => go("home");
 
   // ======================================================== wiring
   function wire(s) {
     $$("[data-go]", s).forEach((b) => b.onclick = () => go(b.dataset.go));
     $$("[data-view]", s).forEach((b) => b.onclick = () => { state.view = b.dataset.view; state.q = ""; render(); });
+    $$("[data-planview]", s).forEach((b) => b.onclick = () => { state.planView = b.dataset.planview; render(); });
+    $$("[data-issues]", s).forEach((b) => b.onclick = () => { state.issueView = b.dataset.issues; render(); });
+    $$("[data-restab]", s).forEach((b) => b.onclick = () => { state.resTab = b.dataset.restab; render(); });
     $$("[data-pin]", s).forEach((b) => b.onclick = () => pin(b.dataset.pin, b.dataset.prof));
+    $$("input[name=plan]", s).forEach((r) => r.onchange = () => { state.opts.plan = r.value; rerun(); toast(`${Engine.MODES[r.value].label} plan chosen`); });
     bindColumnPickers(s, state.columns);
+    // Final plan: every change re-runs at once.
+    const tp = $("#t-plan", s); if (tp) tp.onchange = () => { state.opts.plan = tp.value; rerun(); };
+    const tr = $("#t-preset", s); if (tr) tr.onchange = () => { if (tr.value) { state.opts.levels = presetLevels(tr.value); rerun(); } };
+    if (state.step === "results") {
+      $$("select[data-level]", s).forEach((x) => x.onchange = () => { state.opts.levels = Object.assign({}, state.opts.levels, { [x.dataset.level]: x.value }); const open = $$("details.tgroup", s).map((d) => d.open); rerun(); $$("details.tgroup").forEach((d, i) => { d.open = open[i]; }); });
+      const rs = $("#t-reset", s); if (rs) rs.onclick = () => { state.opts.levels = Object.assign({}, STANDARD_LEVELS); rerun(); toast("Back to standard settings"); };
+      const sv = $("#save-settings", s); if (sv) sv.onclick = () => saveSettings(state.opts.levels, state.columns);
+      const ld = $("#load-settings", s); if (ld) ld.onclick = () => $("#settings-input").click();
+    }
     const keep = $("#keep", s);
     if (keep) keep.onchange = () => { if (keep.checked) pin(keep.dataset.club, keep.dataset.prof); else { unpin(keep.dataset.club); toast("The matcher may change this pairing again"); } };
     $$("tr[data-sel]", s).forEach((tr) => {
@@ -969,7 +1291,7 @@ const SAMPLE = /*SAMPLE*/;
     if (cf) cf.onclick = () => { state.files = { club: null, prof: null, lecture: null }; state.names = {}; state.usingSample = false; state.pins = []; state.uploadMsg = null; state.columns = { club: {}, prof: {}, lecture: {} }; rerun(); };
     const x = $("#dl-xlsx", s); if (x) x.onclick = downloadXlsx;
     const c = $("#dl-csv", s); if (c) c.onclick = () => save(`hesburgh_matches_${stamp()}.csv`, toCSV(matchRows()));
-    if (state.step === "download") checkDownloads();
+    if (state.step === "results") checkDownloads();
   }
 
   function refreshDetail(fn) {
@@ -1078,9 +1400,8 @@ const SAMPLE = /*SAMPLE*/;
       "Free months": x.prof.months.length === 12 ? "All year" : x.prof.months.join(", "), "Travel wishes": x.prof.travel_wishes }));
   }
   function comparisonRows() {
-    const plans = allPlans(), L = Engine.SUMMARY_LABELS;
-    const keys = ["clubs_matched", "first_choice_lectures", "requested_lecture_matches", "repeat_speakers", "profs_used", "max_events_per_prof", "month_clashes", "staff_pick_agreement", "total_score"];
-    return keys.map((k) => Object.assign({ "": L[k] }, Object.fromEntries(plans.map((p) => [p.label + (p.key === state.opts.plan ? " (this plan)" : ""), p.summary[k]]))));
+    const plans = allPlans(), lead = leaders(plans);
+    return MEASURES.map(([k, label]) => Object.assign({ "": label }, Object.fromEntries(plans.map((p) => [p.label + (p.key === state.opts.plan ? " (this plan)" : ""), `${lead[k].has(p.key) ? "★ " : ""}${p.summary[k]}`]))));
   }
   const issueRows = () => Engine.dataIssues(R().data).map((i) => ({ "Type": { error: "Must fix", warning: "Worth a look", info: "For your information" }[i.severity], "About": i.subject, "Note": i.message }));
 
@@ -1098,6 +1419,9 @@ const SAMPLE = /*SAMPLE*/;
   }
   const stamp = () => new Date().toISOString().slice(0, 10);
   async function save(filename, data) {
+    if (downloads === undefined) {
+      try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { downloads = null; }
+    }
     if (!downloads) {
       // A normal web page (for example GitHub Pages): plain browser download.
       const blob = data instanceof Blob ? data : new Blob([data], { type: "text/csv" });
@@ -1135,18 +1459,19 @@ const SAMPLE = /*SAMPLE*/;
       r++;
     };
     block("Results", Object.entries(L).filter(([k]) => k in plan.summary).map(([k, label]) => [label, plan.summary[k]]));
-    block("Settings used", [["Plan", `${plan.label}: ${plan.description}`],
+    const settings = [["Plan", `${plan.label}: ${BLURB[plan.key] || plan.description}`], ["Quick setting", matchingPreset(state.opts.levels) || "Custom"],
       ...Object.entries(PRIORITY).map(([k, p]) => [p[1], state.opts.levels[k]]),
-      ["Speakers chosen by you", state.pins.map(([c, p]) => `${(R().grid.clubs.find((x) => x.id === c) || {}).name || c} → ${p}`).join("; ") || "None"]]);
-    const sheets = [["Matches", matchRows()], ["Needs attention", unmatchedRows()], ["Faculty", facultyRows()], ["Plan comparison", comparisonRows()], ["Data check", issueRows()]];
-    const wide = new Set(["Talk", "Why", "What to do", "Clubs", "Note", "Months that work", "Free months", "Travel wishes", "Topic", "Try 1 note", "Try 2 note", "Try 3 note"]);
+      ["Speakers chosen by you", state.pins.map(([c, p]) => `${(R().grid.clubs.find((x) => x.id === c) || {}).name || c} → ${p}`).join("; ") || "None"]];
+    const sheets = [["Matches", matchRows()], ["Needs attention", unmatchedRows()], ["Faculty", facultyRows()], ["Plan comparison", comparisonRows()], ["Data check", issueRows()],
+      ["Settings used", settings.map(([k, v]) => ({ "Setting": k, "Value": v }))]];
+    const wide = new Set(["Talk", "Why", "What to do", "Clubs", "Note", "Months that work", "Free months", "Travel wishes", "Topic", "Try 1 note", "Try 2 note", "Try 3 note", "Value"]);
     for (const [name, rows] of sheets) {
       const ws = wb.addWorksheet(name, { views: [{ state: "frozen", xSplit: 1, ySplit: 1 }] });
       if (!rows.length) { ws.getCell("A1").value = "Nothing to show."; continue; }
       const cols = Object.keys(rows[0]);
       ws.columns = cols.map((c) => {
         const longest = Math.max(c.length, ...rows.map((x) => String(x[c] ?? "").length));
-        return { header: c, key: c, width: Math.min(wide.has(c) ? 48 : 30, Math.max(9, longest + 2)) };
+        return { header: c, key: c, width: Math.min(wide.has(c) ? 60 : 30, Math.max(9, longest + 2)) };
       });
       rows.forEach((x) => ws.addRow(x));
       ws.getRow(1).height = 30;

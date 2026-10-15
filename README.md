@@ -6,23 +6,32 @@ side, each tuned for a different goal, so staff can choose one.
 
 ## For staff: the Hesburgh Lecture Matcher
 
-Open the matcher page in a web browser and follow its four steps. Nothing needs installing.
+Open the matcher page in a web browser. Nothing needs installing.
+
+The first page explains what the tool does and shows the plans side by side (each
+column is a complete plan, with a gold ★ on the best result in each row). Press
+**Start matching** to go through five steps:
 
 1. **Add files.** Drag in the three spreadsheets: the club requests (`club_info`),
    the faculty responses (`prof_info`) and the lecture list (`lecture_info`).
    Excel (.xlsx) or CSV both work, in any order. If a column has been renamed and
    can't be found, the page asks you to pick it from a list.
-2. **Review matches.** Every club gets a suggested speaker and month. Click a club to
+2. **Choose a plan.** Compare every plan as cards or charts. Recommended is picked
+   for you, and "Why Recommended?" lists what it gains over the others.
+3. **Review matches.** Every club gets a suggested speaker and month. Click a club to
    see why that speaker was picked. If you'd rather send someone else, press
    **Choose instead** and the rest of the plan adjusts.
-3. **Fix problems.** Clubs without a speaker are grouped by reason, with what to do
-   and which speakers to try.
-4. **Download.** Save one Excel workbook with the matches, the clubs that need
-   attention, each speaker's load, a comparison of every plan, and a data check.
+4. **Fix problems.** Clubs without a speaker are grouped by reason, with what to do
+   and which speakers to try. A list of spreadsheet issues can be filtered by
+   Must fix, Worth a look and For your information.
+5. **Final plan.** Fine-tune the plan, quick setting and each of the 11 priorities
+   and watch the numbers and charts (talks by month, choice, region, busiest
+   professors) update. Save or load your settings, then download one Excel
+   workbook with the matches, the clubs that need attention, each speaker's load,
+   a comparison of every plan, a data check and the settings used.
 
-The **Recommended** plan is on by default. **Settings** lets you pick another plan
-(each shows its numbers side by side), change priorities such as "Bigger clubs first"
-(each has a "What does this do?" note), or choose which column holds what.
+**Settings** (top right) holds the same priorities, each with a "What does this
+do?" note, plus the spreadsheet column picker.
 
 The page is `web/index.html`. Files are read inside the browser and never uploaded,
 and the page contains no club or faculty data. The JavaScript in `web/engine.js` is a
