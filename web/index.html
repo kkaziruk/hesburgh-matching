@@ -1,0 +1,2062 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hesburgh Lecture Matcher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+html, body { margin: 0; height: 100%; }
+
+/* Layout: a guided four-step tool. Navy header, a step bar under it, and one step on screen at a time with Back and Next at the bottom. */
+:root {
+  --bg: #f4f5f8;
+  --card: #ffffff;
+  --text: #14233c;
+  --text-2: #586379;
+  --line: #dde2ea;
+  --navy: #0c2340;
+  --navy-2: #1a3a66;
+  --on-navy: #ffffff;
+  --on-navy-2: #b9c4d8;
+  --gold: #c99700;
+  --gold-text: #7f6000;
+  --gold-soft: #fbf3dc;
+  --gold-line: #ecd9a1;
+  --good: #1d7a4a;
+  --good-soft: #e3f3ea;
+  --warn: #93560a;
+  --warn-soft: #fcefdc;
+  --bad: #b02a22;
+  --bad-soft: #fae3e0;
+  --shadow: 0 1px 2px rgba(12, 35, 64, .06), 0 6px 18px rgba(12, 35, 64, .06);
+  --serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1322; --card: #131d31; --text: #e9eef7; --text-2: #a1acc0; --line: #283550;
+    --navy: #08172e; --navy-2: #23477a; --on-navy: #ffffff; --on-navy-2: #a9b6cc;
+    --gold: #e0b443; --gold-text: #e9c460; --gold-soft: #2e2711; --gold-line: #5a4a1c;
+    --good: #72d39e; --good-soft: #143022; --warn: #f1b866; --warn-soft: #36280f; --bad: #ff8e85; --bad-soft: #3a1c1a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1322; --card: #131d31; --text: #e9eef7; --text-2: #a1acc0; --line: #283550;
+  --navy: #08172e; --navy-2: #23477a; --on-navy: #ffffff; --on-navy-2: #a9b6cc;
+  --gold: #e0b443; --gold-text: #e9c460; --gold-soft: #2e2711; --gold-line: #5a4a1c;
+  --good: #72d39e; --good-soft: #143022; --warn: #f1b866; --warn-soft: #36280f; --bad: #ff8e85; --bad-soft: #3a1c1a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.005em; }
+p { margin: 0; }
+.muted { color: var(--text-2); }
+.small { font-size: 13px; }
+[hidden] { display: none !important; }
+
+/* ---------- frame ---------- */
+.app { height: 100%; display: grid; grid-template-rows: auto auto 1fr; }
+.pad { padding-left: max(28px, env(safe-area-inset-left, 0px)); padding-right: max(28px, env(safe-area-inset-right, 0px)); }
+.head { background: var(--navy); color: var(--on-navy); display: flex; align-items: center; gap: 16px; padding-block: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand svg { flex: none; }
+.brand b { display: block; font-family: var(--serif); font-size: 19px; font-weight: 600; line-height: 1.2; }
+.brand span { display: block; font-size: 13px; color: var(--on-navy-2); }
+.head .spacer { flex: 1; }
+.head-btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255, 255, 255, .25); background: transparent; color: var(--on-navy); border-radius: 8px; padding: 7px 13px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.head-btn:hover { background: rgba(255, 255, 255, .08); }
+
+.steps { background: var(--card); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.step { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; text-align: left; border: 0; border-bottom: 3px solid transparent; background: none; padding: 14px 16px 12px; min-width: 0; }
+.step:hover { background: var(--bg); }
+.step .num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; border: 2px solid var(--line); color: var(--text-2); background: var(--card); }
+.step .what { display: block; font-weight: 700; font-size: 15px; }
+.step .hint { display: block; font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step[aria-current="step"] { border-bottom-color: var(--gold); }
+.step[aria-current="step"] .num { background: var(--navy); border-color: var(--navy); color: var(--on-navy); }
+.step.done .num { background: var(--good); border-color: var(--good); color: var(--card); }
+.step:disabled { cursor: default; opacity: .55; }
+.step:disabled:hover { background: none; }
+
+.stage { min-height: 0; overflow: auto; padding-block: 22px 0; }
+.stage-inner { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; min-height: 100%; grid-template-rows: auto 1fr auto; }
+.intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; background: var(--gold-soft); border: 1px solid var(--gold-line); border-radius: 12px; padding: 14px 18px; }
+.intro .i { width: 26px; height: 26px; border-radius: 50%; background: var(--gold); color: #0c2340; display: grid; place-items: center; font-weight: 800; font-family: var(--serif); }
+.intro h1 { font-size: 22px; line-height: 1.25; }
+.intro p { margin-top: 4px; max-width: 90ch; }
+.foot { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: 12px; align-items: center; padding-block: 14px max(16px, env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--bg) 30%); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 9px; padding: 10px 18px; font-weight: 600; font-size: 15px; white-space: nowrap; box-shadow: var(--shadow); }
+.btn:hover { border-color: var(--text-2); }
+.btn.primary { background: var(--navy); border-color: var(--navy); color: var(--on-navy); }
+.btn.primary:hover { background: var(--navy-2); }
+.btn.small { padding: 6px 12px; font-size: 13.5px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.link { border: 0; background: none; padding: 0; font-weight: 600; color: var(--navy-2); text-decoration: underline; text-underline-offset: 3px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .link { color: var(--gold-text); } }
+:root[data-theme="dark"] .link { color: var(--gold-text); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); min-width: 0; }
+.card-h { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.card-h h2 { font-size: 18px; }
+.card-b { padding: 18px; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.tag.good { background: var(--good-soft); color: var(--good); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.tag.gold { background: var(--gold-soft); color: var(--gold-text); }
+.tag.plain { border: 1px solid var(--line); color: var(--text-2); }
+
+/* ---------- step 1 ---------- */
+.upload { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.drop { border: 2px dashed var(--line); border-radius: 12px; padding: 34px 20px; display: grid; gap: 10px; justify-items: center; text-align: center; background: var(--card); transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--gold); background: var(--gold-soft); }
+.drop svg { color: var(--navy-2); }
+.drop strong { font-family: var(--serif); font-size: 21px; font-weight: 600; }
+.checklist { display: grid; }
+.need { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.need:last-child { border-bottom: 0; }
+.need .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 14px; font-weight: 700; color: var(--text-2); }
+.need.ok .dot { background: var(--good); border-color: var(--good); color: var(--card); }
+.need b { display: block; }
+.need .status { font-size: 13px; margin-top: 2px; color: var(--text-2); }
+.need.ok .status { color: var(--good); font-weight: 600; }
+.howto { display: grid; gap: 6px; font-size: 14px; }
+.howto ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.banner { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: space-between; padding: 14px 18px; border-radius: 12px; background: var(--good-soft); color: var(--good); font-weight: 600; }
+.banner.err { background: var(--bad-soft); color: var(--bad); }
+
+/* ---------- step 2 ---------- */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.stat { padding: 10px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; align-items: center; }
+.stat b { grid-column: 2; grid-row: 1 / span 2; }
+.stat b { font-family: var(--serif); font-size: 28px; font-weight: 600; line-height: 1.1; }
+.stat b small { font-size: 17px; color: var(--text-2); font-weight: 600; }
+.stat span { font-size: 13.5px; color: var(--text-2); }
+.stat .link { font-size: 13.5px; justify-self: start; }
+.review { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 18px; min-height: 0; align-items: start; }
+.listcard { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: calc(100vh - 480px); min-height: 340px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.search { flex: 1 1 200px; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); }
+.seg { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--line); border-radius: 9px; padding: 3px; background: var(--bg); }
+.seg button { border: 0; background: none; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 13.5px; color: var(--text-2); white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+.scroll { overflow: auto; min-height: 0; }
+#detail { max-height: calc(100vh - 480px); min-height: 340px; overflow: auto; }
+.list { width: 100%; border-collapse: collapse; }
+.list th { position: sticky; top: 0; background: var(--card); text-align: left; font-size: 12.5px; font-weight: 600; color: var(--text-2); padding: 9px 14px; border-bottom: 1px solid var(--line); z-index: 1; }
+.list td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.list tr.row { cursor: pointer; }
+.list tr.row:hover td { background: var(--bg); }
+.list tr.row[aria-selected="true"] td { background: var(--gold-soft); }
+.list tr.row[aria-selected="true"] td:first-child { box-shadow: inset 4px 0 0 var(--gold); }
+.who { font-weight: 600; }
+.sub { font-size: 13px; color: var(--text-2); }
+.detail { display: grid; gap: 20px; }
+.detail .lead { font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gold-text); }
+.detail h2 { font-size: 26px; line-height: 1.2; }
+.reasons { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.reasons li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; }
+.reasons .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: var(--good-soft); color: var(--good); }
+.reasons .ic.w { background: var(--warn-soft); color: var(--warn); }
+.sec { display: grid; gap: 10px; }
+.sec h3 { font-family: var(--sans); font-size: 14px; font-weight: 700; }
+.cal { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
+.cal div { border: 1px solid var(--line); border-radius: 6px; text-align: center; padding: 6px 0 5px; font-size: 12px; color: var(--text-2); }
+.cal div.club { border-color: var(--text-2); }
+.cal div.both { background: var(--gold); border-color: var(--gold); color: #0c2340; font-weight: 700; }
+.cal-key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); }
+.cal-key i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; border: 1px solid var(--line); margin-right: 6px; vertical-align: -1px; }
+.cal-key i.club { border-color: var(--text-2); }
+.cal-key i.both { background: var(--gold); border-color: var(--gold); }
+.quote { border-left: 3px solid var(--gold); padding: 2px 0 2px 12px; color: var(--text-2); }
+.options { display: grid; gap: 10px; }
+.option { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; }
+.option .nm { font-weight: 600; }
+.keep { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--bg); font-weight: 600; cursor: pointer; }
+.keep input { width: 18px; height: 18px; accent-color: var(--navy-2); flex: none; }
+details.more summary { cursor: pointer; font-weight: 600; color: var(--text-2); font-size: 14px; }
+details.more[open] summary { margin-bottom: 10px; }
+.math { width: 100%; border-collapse: collapse; font-size: 14px; }
+.math td { padding: 5px 0; border-bottom: 1px dashed var(--line); }
+.math td:last-child { text-align: right; }
+.math tr.total td { border-bottom: 0; border-top: 2px solid var(--text); font-weight: 700; padding-top: 8px; }
+.load { display: flex; gap: 4px; }
+.load i { width: 18px; height: 8px; border-radius: 3px; border: 1px solid var(--text-2); }
+.load i.on { background: var(--gold); border-color: var(--gold); }
+
+/* ---------- step 3 ---------- */
+.fixes { display: grid; gap: 16px; }
+.group-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.group-list span { border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: 14px; background: var(--bg); }
+.todo-steps { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.problem { display: grid; gap: 10px; padding: 16px 18px; border-top: 1px solid var(--line); }
+.notes { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+
+/* ---------- step 4 ---------- */
+.dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.dl .card-b { display: grid; gap: 12px; align-content: start; }
+.dl ul { margin: 0; padding-left: 20px; display: grid; gap: 3px; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 18px; font-size: 14px; margin: 0; }
+.facts dt { color: var(--text-2); }
+.facts dd { margin: 0; font-weight: 600; }
+
+/* ---------- overlays ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(8, 16, 30, .5); display: grid; place-items: center; padding: 20px; z-index: 20; }
+.modal { background: var(--card); border-radius: 14px; box-shadow: 0 20px 60px rgba(0, 0, 0, .3); width: min(720px, 100%); max-height: calc(100% - 20px); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.modal-h { padding: 18px 22px 14px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.modal-h h2 { font-size: 22px; }
+.modal-b { padding: 18px 22px; overflow: auto; display: grid; gap: 22px; }
+.modal-f { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.x { border: 0; background: none; font-size: 26px; line-height: 1; color: var(--text-2); padding: 0 4px; }
+.q { display: grid; gap: 8px; }
+.q > b { font-size: 15px; }
+.radio { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.radio:has(input:checked) { border-color: var(--navy-2); background: var(--bg); }
+.radio input { margin: 3px 0 0; accent-color: var(--navy-2); }
+.radio span b { display: block; font-weight: 600; }
+.sliders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.sliders label { display: grid; gap: 4px; font-weight: 600; font-size: 14px; }
+.sliders output { font-weight: 600; color: var(--gold-text); font-size: 13px; }
+input[type="range"] { width: 100%; accent-color: var(--navy-2); }
+.help-sec { display: grid; gap: 8px; }
+.help-sec h3 { font-size: 18px; }
+.help-sec ol, .help-sec ul { margin: 0; padding-left: 20px; display: grid; gap: 5px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--navy); color: var(--on-navy); padding: 11px 18px; border-radius: 10px; font-weight: 600; box-shadow: var(--shadow); z-index: 30; max-width: calc(100% - 32px); }
+
+/* ---------- small screens ---------- */
+@media (max-width: 900px) {
+  .pad { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .step { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 4px; padding: 10px 4px; }
+  .step .hint { display: none; }
+  .step .what { font-size: 12.5px; }
+  .upload, .review, .dl { grid-template-columns: minmax(0, 1fr); }
+  .listcard { max-height: 60vh; }
+  #detail { max-height: none; min-height: 0; overflow: visible; }
+  .brand span { display: none; }
+  .head-btn .lbl { display: none; }
+}
+@media (max-width: 560px) {
+  .stats { gap: 8px; }
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .sliders { grid-template-columns: minmax(0, 1fr); }
+  .cal div { font-size: 10px; }
+  .intro { grid-template-columns: minmax(0, 1fr); }
+  .intro .i { display: none; }
+  .option { grid-template-columns: minmax(0, 1fr); }
+  .option .btn { justify-self: start; }
+}
+
+/* ---------- plan, priorities, columns ---------- */
+.modal.wide { width: min(820px, 100%); }
+.modal-tabs { margin: 12px 22px 0; justify-self: start; }
+.modal { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.nums { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--navy-2); }
+.why { border: 1px solid var(--gold-line); background: var(--gold-soft); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.why ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.prios { display: grid; gap: 10px; }
+.prio { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+.prio-h { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.prio-h b { display: block; font-weight: 600; }
+.prio select, .colpick select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+details.what summary { cursor: pointer; font-size: 13px; color: var(--gold-text); font-weight: 600; }
+details.what p { margin: 6px 0 0; font-size: 14px; color: var(--text-2); }
+.colgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.colpick { display: grid; gap: 4px; font-size: 14px; font-weight: 600; min-width: 0; }
+.colpick select { width: 100%; font-weight: 400; }
+.colpick.multi { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 0; }
+.colpick.multi .checks { display: flex; flex-wrap: wrap; gap: 4px 14px; font-weight: 400; }
+details.colsec { border-top: 1px solid var(--line); padding-top: 10px; }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+details.problem > summary { cursor: pointer; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; list-style: none; }
+details.problem > summary::-webkit-details-marker { display: none; }
+details.problem > summary::before { content: "▸"; color: var(--text-2); margin-right: -4px; }
+details.problem[open] > summary::before { content: "▾"; }
+details.problem > summary > span:first-child { flex: 1; min-width: 0; }
+.problem { padding: 12px 18px; }
+@media (max-width: 700px) { .plans { grid-template-columns: minmax(0, 1fr); } }
+.cal div.pick { box-shadow: inset 0 0 0 2px var(--navy); }
+.cal-key i.pick { box-shadow: inset 0 0 0 2px var(--navy); }
+@media (max-width: 560px) { .colgrid { grid-template-columns: minmax(0, 1fr); } .prio-h { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="head pad">
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+        <rect x="1" y="1" width="36" height="36" rx="9" fill="#c99700"/>
+        <path d="M12 26V12M12 19h7M19 12v14M24 12v14h5" stroke="#0c2340" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div><b>Hesburgh Lecture Matcher</b><span>Pairs faculty speakers with alumni clubs</span></div>
+    </div>
+    <div class="spacer"></div>
+    <button type="button" class="head-btn" id="open-settings" aria-label="Matching settings">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+      <span class="lbl">Settings</span></button>
+    <button type="button" class="head-btn" id="open-help" aria-label="How this works">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2-2.4 3.8M12 17h.01"/></svg>
+      <span class="lbl">How this works</span></button>
+  </header>
+  <nav class="steps" id="steps" aria-label="Steps"></nav>
+  <main class="stage pad" id="stage"></main>
+</div>
+<input id="file-input" type="file" accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden>
+<div class="overlay" id="overlay" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* Hesburgh Lecture matching engine, in JavaScript for the browser page.
+ *
+ * A line-by-line port of the Python engine in engine/ (text.py, columns.py,
+ * loader.py, scoring.py, modes.py, solver.py, plans.py). Same rules, same
+ * scores, same plans: `node web/parity_check.js` runs both on the same files
+ * and fails on any difference. If you change the Python engine, change this
+ * file the same way.
+ *
+ * One addition the Python engine doesn't have: `pins`, pairs staff fixed by
+ * hand in the page. They are booked first and the plan is solved around them.
+ */
+(function (root) {
+  "use strict";
+
+  // ================================================================ difflib
+  function matchingBlocks(a, b) {
+    const b2j = new Map();
+    for (let i = 0; i < b.length; i++) {
+      if (!b2j.has(b[i])) b2j.set(b[i], []);
+      b2j.get(b[i]).push(i);
+    }
+    if (b.length >= 200) {
+      const ntest = Math.floor(b.length / 100) + 1;
+      for (const [ch, idx] of [...b2j]) if (idx.length > ntest) b2j.delete(ch);
+    }
+    function longest(alo, ahi, blo, bhi) {
+      let besti = alo, bestj = blo, bestsize = 0, j2len = new Map();
+      for (let i = alo; i < ahi; i++) {
+        const next = new Map();
+        for (const j of b2j.get(a[i]) || []) {
+          if (j < blo) continue;
+          if (j >= bhi) break;
+          const k = (j2len.get(j - 1) || 0) + 1;
+          next.set(j, k);
+          if (k > bestsize) { besti = i - k + 1; bestj = j - k + 1; bestsize = k; }
+        }
+        j2len = next;
+      }
+      while (besti > alo && bestj > blo && a[besti - 1] === b[bestj - 1]) { besti--; bestj--; bestsize++; }
+      while (besti + bestsize < ahi && bestj + bestsize < bhi && a[besti + bestsize] === b[bestj + bestsize]) bestsize++;
+      return [besti, bestj, bestsize];
+    }
+    const queue = [[0, a.length, 0, b.length]], blocks = [];
+    while (queue.length) {
+      const [alo, ahi, blo, bhi] = queue.pop();
+      const [i, j, k] = longest(alo, ahi, blo, bhi);
+      if (k) {
+        blocks.push(k);
+        if (alo < i && blo < j) queue.push([alo, i, blo, j]);
+        if (i + k < ahi && j + k < bhi) queue.push([i + k, ahi, j + k, bhi]);
+      }
+    }
+    return blocks.reduce((s, k) => s + k, 0);
+  }
+  function ratio(a, b) {
+    const total = a.length + b.length;
+    return total ? 2.0 * matchingBlocks(a, b) / total : 1.0;
+  }
+  function closeMatches(word, possibilities, n, cutoff) {
+    const hits = [];
+    for (const x of possibilities) { const r = ratio(x, word); if (r >= cutoff) hits.push([r, x]); }
+    hits.sort((p, q) => (q[0] - p[0]) || (q[1] < p[1] ? -1 : q[1] > p[1] ? 1 : 0));
+    return hits.slice(0, n).map((h) => h[1]);
+  }
+
+  // ================================================================ text.py
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"];
+  const MONTH_NUMBER = Object.fromEntries(MONTHS.map((m, i) => [m.toLowerCase(), i]));
+  const TITLE_THEN_MONTHS = new RegExp(`^([\\s\\S]*?)\\s*-\\s*((?:${MONTHS.join("|")})[\\s\\S]*)$`, "i");
+  const TYPOGRAPHY = { "‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", " ": " " };
+
+  const typo = (s) => String(s ?? "").replace(/[‘’“”–— ]/g, (c) => TYPOGRAPHY[c]);
+  const clean = (s) => typo(s).replace(/\s+/g, " ").trim().toLowerCase();
+  const tidy = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
+  const strip = (s) => String(s ?? "").trim();
+
+  function nameKey(name) {
+    let s = clean(name);
+    s = s.replace(/\b(fr|father|rev|dr|sr|br)\.?\s+/g, "");
+    s = s.replace(/,?\s*c\.?\s*s\.?\s*c\.?$/, "");
+    s = s.replace(/[.']/g, "");
+    s = s.replace(/[-,]/g, " ");
+    return s.replace(/\s+/g, " ").trim();
+  }
+  function nameSimilarity(a, b) {
+    const ka = nameKey(a), kb = nameKey(b);
+    if (!ka || !kb) return 0.0;
+    return ka === kb ? 1.0 : ratio(ka, kb);
+  }
+  const samePerson = (a, b, threshold = 0.85) => nameSimilarity(a, b) >= threshold;
+
+  function parseMonths(raw) {
+    const text = clean(raw);
+    if (!text) return [];
+    if (text.includes("all of the above") || text.replace(/ /g, "") === "january-december") return MONTHS.slice();
+    const found = new Set();
+    for (const part of text.split(/[,;/]/)) {
+      const ends = part.split("-").map((e) => e.trim());
+      const numbers = ends.filter((e) => e in MONTH_NUMBER).map((e) => MONTH_NUMBER[e]);
+      if (ends.length === 2 && numbers.length === 2) {
+        const [start, stop] = numbers;
+        if (start <= stop) for (let i = start; i <= stop; i++) found.add(i);
+        else { for (let i = start; i < 12; i++) found.add(i); for (let i = 0; i <= stop; i++) found.add(i); }
+      } else numbers.forEach((n) => found.add(n));
+    }
+    return [...found].sort((x, y) => x - y).map((i) => MONTHS[i]);
+  }
+
+  function splitRequest(cell) {
+    if (!cell || !cell.includes("|")) return [null, null];
+    const at = cell.indexOf("|");
+    const theme = cell.slice(0, at).trim(), rest = cell.slice(at + 1).trim();
+    const m = TITLE_THEN_MONTHS.exec(rest);
+    const title = m ? m[1].trim() : rest;
+    return [theme || null, title || null];
+  }
+  const ordinal = (n) => (n === null || n === undefined ? "?" : ({ 1: "1st", 2: "2nd", 3: "3rd" }[n] || `${n}th`));
+
+  // ================================================================ columns.py
+  const FILES = { club: "club_info.csv", prof: "prof_info.csv", lecture: "lecture_info.csv" };
+  const F = (file, key, header, meaning, required = false, also = [], extra = {}) =>
+    Object.assign({ file, key, header, meaning, required, also, pattern: null, many: false, newestFirst: false }, extra);
+  const SCHEMA = [
+    F("club", "id", "ID Number", "Unique club ID", true, ["Club ID", "ID"]),
+    F("club", "name", "Club Check", "Club name", true, ["Club", "Club Name"]),
+    F("club", "availability", "Availability", "Months the club can host, comma-separated", true, ["Months", "Available Months"]),
+    F("club", "themes", "Theme 1 … Theme 5", "The club's ranked requests, 'Theme | Lecture- months'", true, [], { pattern: /^theme(\d+)$/, many: true }),
+    F("club", "size", "Size", "Club size code AA … F", false, ["Club Size"]),
+    F("club", "hls_score", "HLS Score", "Engagement score", false, ["Engagement Score", "Engagement"]),
+    F("club", "region", "Region", "Region name"),
+    F("club", "format", "Format", "Talk formats the club wants, comma-separated", false, ["Formats", "Format(s)"]),
+    F("club", "invited", "Invited 2026", "'Invited' marks a club in this year's program", false, [], { pattern: /^invited(\d{4})?$/, newestFirst: true }),
+    F("club", "past_speakers", "2025 Speaker … 2022 Speaker", "Speakers from earlier years", false, [], { pattern: /^(\d{4})speaker$/, many: true, newestFirst: true }),
+    F("club", "staff_pick", "2026 Assignment", "Staff's own pick, used only for comparison", false, [], { pattern: /^(\d{4})assignment$/, newestFirst: true }),
+    F("prof", "name", "Recipient Full Name", "Professor's full name", true, ["Full Name", "Name", "Professor", "Faculty"]),
+    F("prof", "availability", "Availability", "Months available, or 'All of the above'", true, ["Months", "Available Months"]),
+    F("prof", "max_events", "# of Events", "Most events this professor will do (blank = 1)", false, ["Number of Events", "Max Events", "Events"]),
+    F("prof", "title", "Title", "Job title, for the title boost", false, ["Job Title", "Position"]),
+    F("prof", "formats", "Format(s)", "Talk formats offered, comma-separated", false, ["Formats", "Format"]),
+    F("prof", "participate", "Participate in the Hesburgh Lecture program in 2026?", "Answers starting 'No' are skipped", false, [], { pattern: /^participate/ }),
+    F("prof", "travel", "Particular clubs or areas of the country you are interested in traveling?", "Free-text travel wishes, for the Balanced plan", false, [], { pattern: /^particularclubs|areasofthecountry|travelpref/ }),
+    F("lecture", "faculty", "Faculty", "Professor who gives the lecture", true, ["Professor", "Speaker", "Name"]),
+    F("lecture", "theme", "Theme", "Theme the lecture belongs to", true, ["Category"]),
+    F("lecture", "topic", "Topic", "Lecture title, spelled as clubs request it", true, ["Title", "Lecture", "Lecture Title"]),
+    F("lecture", "availability", "Availability", "Months the lecture is offered (blank = all year)", false, ["Months"]),
+  ];
+  const fieldsFor = (file) => SCHEMA.filter((f) => f.file === file);
+  const squash = (h) => String(h || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  class Columns {
+    constructor(file, headers, found) { Object.assign(this, { file, headers, found }); }
+    get(row, key) { const h = this.found[key]; return typeof h === "string" ? (row[h] ?? "") : ""; }
+    getAll(row, key) { return (this.found[key] || []).map((h) => row[h] ?? ""); }
+    has(key) { const v = this.found[key]; return Array.isArray(v) ? v.length > 0 : !!v; }
+  }
+
+  function resolve(file, headers, overrides, issues) {
+    overrides = overrides || {};
+    const squashed = {};
+    for (const h of headers) squashed[squash(h)] = h;
+    const taken = new Set(), found = {}, fname = FILES[file];
+    for (const field of fieldsFor(file)) {
+      const want = overrides[field.key];
+      if (want === undefined || want === null || want === "" || (Array.isArray(want) && !want.length)) continue;
+      const names = Array.isArray(want) ? want : [want];
+      const missing = names.filter((n) => !headers.includes(n));
+      if (missing.length) {
+        issues.error("missing_column", fname, `Column '${missing[0]}' chosen for '${field.header}' is not in ${fname}.`);
+        continue;
+      }
+      found[field.key] = field.many ? names : names[0];
+      names.forEach((n) => taken.add(n));
+    }
+    for (const field of fieldsFor(file)) {
+      if (field.key in found) continue;
+      const match = automatic(field, headers, squashed, taken);
+      const any = Array.isArray(match) ? match.length : match;
+      if (any) {
+        found[field.key] = match;
+        (Array.isArray(match) ? match : [match]).forEach((h) => taken.add(h));
+        const first = Array.isArray(match) ? match[0] : match;
+        const usual = new Set([squash(field.header), ...field.also.map(squash)]);
+        if (!field.many && !field.pattern && !usual.has(squash(first))) {
+          issues.note("column_matched", fname, `Using column '${first}' for '${field.header}'.`);
+        }
+      } else if (field.required) {
+        issues.error("missing_column", fname, `Required column '${field.header}' (${field.meaning.toLowerCase()}) was not found. `
+          + "Rename it back or choose the column in Settings.");
+      } else {
+        found[field.key] = field.many ? [] : null;
+        issues.note("missing_column", fname, `Optional column '${field.header}' not found (${field.meaning.toLowerCase()}); `
+          + "matching works without it.");
+      }
+    }
+    return new Columns(file, headers, found);
+  }
+
+  function automatic(field, headers, squashed, taken) {
+    const free = (h) => !taken.has(h);
+    if (!field.many) {
+      for (const name of [field.header, ...field.also]) {
+        const h = squashed[squash(name)];
+        if (h && free(h)) return h;
+      }
+    }
+    if (field.pattern) {
+      const hits = [];
+      for (const h of headers) {
+        const m = field.pattern.exec(squash(h));
+        if (m && free(h)) hits.push([m[1] ? parseInt(m[1], 10) : 0, h]);
+      }
+      if (hits.length) {
+        hits.sort((x, y) => (field.newestFirst ? y[0] - x[0] : x[0] - y[0]));
+        return field.many ? hits.map((x) => x[1]) : hits[0][1];
+      }
+    }
+    if (!field.many) {
+      const candidates = headers.filter(free);
+      const close = closeMatches(squash(field.header), candidates.map(squash), 1, 0.88);
+      if (close.length) return candidates.find((h) => squash(h) === close[0]);
+    }
+    return field.many ? [] : null;
+  }
+
+  const defaultsFor = (f) => (f.key === "themes" ? [1, 2, 3, 4, 5].map((i) => `Theme ${i}`)
+    : f.key === "past_speakers" ? [2025, 2024, 2023, 2022].map((y) => `${y} Speaker`) : [f.header]);
+  const COLUMN_SPEC = Object.fromEntries(Object.keys(FILES).map((g) => [g, fieldsFor(g).map((f) => ({
+    field: f.key, label: f.many ? f.header.replace(" … ", " to ") : f.header, required: f.required, multi: f.many,
+    default: defaultsFor(f), meaning: f.meaning,
+  }))]));
+
+  // ================================================================ loader.py
+  const SIZE_CODES = ["AA", "A", "B", "C", "D", "E", "F"];
+  const SEVERITY_ORDER = { error: 0, warning: 1, info: 2 };
+
+  class Issues extends Array {
+    add(severity, kind, subject, message) {
+      if (!this.some((i) => i.severity === severity && i.kind === kind && i.subject === subject && i.message === message)) {
+        this.push({ severity, kind, subject, message });
+      }
+    }
+    error(k, s, m) { this.add("error", k, s, m); }
+    warn(k, s, m) { this.add("warning", k, s, m); }
+    note(k, s, m) { this.add("info", k, s, m); }
+  }
+
+  // Python's csv module: a quote only opens quoting at the start of a field; blank lines are skipped.
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = "", inQ = false, atStart = true, i = 0;
+    const endRow = () => { row.push(field); if (!(row.length === 1 && row[0] === "" && !row.quoted)) rows.push(row); row = []; field = ""; atStart = true; };
+    while (i < text.length) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i += 2; continue; } inQ = false; i++; continue; }
+        field += c; i++; continue;
+      }
+      if (c === '"' && atStart) { inQ = true; atStart = false; row.quoted = true; i++; continue; }
+      if (c === ",") { row.push(field); field = ""; atStart = true; i++; continue; }
+      if (c === "\r" || c === "\n") { if (c === "\r" && text[i + 1] === "\n") i++; i++; endRow(); continue; }
+      field += c; atStart = false; i++;
+    }
+    if (field !== "" || row.length || row.quoted) endRow();
+    return rows;
+  }
+
+  function readTable(text) {
+    text = String(text || "").replace(/^﻿/, "");
+    const all = parseCSV(text);
+    if (!all.length) return [[], []];
+    const raw = all[0];
+    const headers = raw.map((h) => (h || "").trim());
+    const rows = all.slice(1).map((r) => {
+      const d = {};
+      raw.forEach((h, i) => { d[(h || "").trim()] = r[i] ?? ""; });
+      return d;
+    });
+    return [headers, rows];
+  }
+
+  function firstNumber(text) { const m = /\d+/.exec(text || ""); return m ? parseInt(m[0], 10) : null; }
+  const splitList = (text) => (text || "").split(",").map((x) => x.trim()).filter(Boolean);
+
+  function seniorTitle(raw) {
+    let text = clean(raw);
+    const held = [];
+    for (const t of Object.keys(TITLE_BOOST).sort((a, b) => b.length - a.length)) {
+      if (text.includes(t)) { held.push(t); text = text.split(t).join(" "); }
+    }
+    let best = "professor";
+    if (held.length) { best = held[0]; for (const t of held) if (TITLE_BOOST[t] > TITLE_BOOST[best]) best = t; }
+    return best;
+  }
+
+  function loadLectures(rows, col, issues) {
+    const lectures = [], seen = new Set();
+    for (const row of rows) {
+      const [faculty, theme, topic] = ["faculty", "theme", "topic"].map((k) => col.get(row, k).trim());
+      if (!(faculty && theme && topic)) {
+        if (Object.values(row).some((v) => v.trim())) {
+          issues.warn("dropped_row", faculty || topic || "lecture_info.csv", "Lecture row skipped because Faculty, Theme or Topic is blank.");
+        }
+        continue;
+      }
+      const key = [nameKey(faculty), clean(theme), clean(topic)].join("\u0000");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const months = parseMonths(col.get(row, "availability"));
+      lectures.push({ theme, title: topic, months: months.length ? months : MONTHS.slice(), listed_under: faculty });
+    }
+    return lectures;
+  }
+
+  function attachLectures(profs, lectures, issues) {
+    for (const lecture of lectures) {
+      let owner = null, best = -Infinity;
+      for (const p of profs) { const s = nameSimilarity(p.name, lecture.listed_under); if (s > best) { best = s; owner = p; } }
+      const similarity = owner ? best : 0.0;
+      if (similarity < 0.85) {
+        issues.warn("lecture_not_found", lecture.listed_under, `Lecture '${lecture.title}' belongs to '${lecture.listed_under}', who is not in prof_info.csv.`);
+        continue;
+      }
+      if (similarity < 1.0) issues.warn("name_mismatch", owner.name, `Catalog lists this professor as '${lecture.listed_under}'; matched automatically.`);
+      owner.lectures.push(lecture);
+    }
+    for (const prof of profs) {
+      if (!prof.lectures.length) {
+        issues.error("prof_no_lectures", prof.name, "No lectures found in lecture_info.csv for this professor, so they can never be matched.");
+      }
+    }
+  }
+
+  const isSurveyLabelRow = (name, header) => name.toLowerCase() === "recipient full name" || name.toLowerCase() === header.toLowerCase() || name.startsWith("{");
+
+  function makeProf(o) {
+    const p = Object.assign({ lectures: [] }, o);
+    Object.defineProperty(p, "themes", { get() { return new Set(this.lectures.map((l) => clean(l.theme))); } });
+    p.offers = function (title) { const k = clean(title); return k ? this.lectures.find((l) => clean(l.title) === k) || null : null; };
+    return p;
+  }
+
+  function loadProfs(rows, col, issues) {
+    const profs = [];
+    rows.forEach((row, idx) => {
+      const number = idx + 2, name = tidy(col.get(row, "name"));
+      if (number === 2 && isSurveyLabelRow(name, col.found.name)) { issues.note("dropped_row", "prof_info.csv row 2", "Dropped a survey label row (not a professor)."); return; }
+      if (!name) {
+        if (Object.values(row).some((v) => v.trim())) issues.warn("dropped_row", `prof_info.csv row ${number}`, "Professor row skipped because the name is blank.");
+        return;
+      }
+      if (col.get(row, "participate").trim().toLowerCase().startsWith("no")) { issues.note("declined", name, "Declined to participate in 2026; not matched."); return; }
+      const months = parseMonths(col.get(row, "availability"));
+      if (!months.length) issues.warn("missing_availability", name, "No availability months, so this professor cannot be matched.");
+      const maxEvents = firstNumber(col.get(row, "max_events"));
+      if (maxEvents === null && col.has("max_events")) issues.warn("blank_score", name, "# of Events is blank; assuming 1.");
+      const titleRaw = col.get(row, "title").trim();
+      if (titleRaw && !Object.keys(TITLE_BOOST).some((t) => clean(titleRaw).includes(t))) {
+        issues.note("unknown_title", name, `Title '${titleRaw.split(/\r\n|\r|\n/)[0]}' not recognised; treated as professor.`);
+      }
+      profs.push(makeProf({
+        name, title: seniorTitle(titleRaw), title_raw: titleRaw, months, max_events: Math.max(1, maxEvents || 1),
+        formats: splitList(col.get(row, "formats")), travel_wishes: col.get(row, "travel"),
+      }));
+    });
+    return profs;
+  }
+
+  function isInProgram(row, col) {
+    const themes = col.getAll(row, "themes");
+    return col.get(row, "invited").trim().toLowerCase() === "invited" || !!(themes.length && themes[0].trim());
+  }
+
+  function readRequests(row, col, catalog, club, issues) {
+    const requests = [], seen = new Set();
+    col.getAll(row, "themes").forEach((cell, i) => {
+      const [theme, title] = splitRequest(cell);
+      const key = clean(theme) + "\u0000" + clean(title);
+      if (!(theme || title) || seen.has(key)) return;
+      seen.add(key);
+      requests.push({ rank: i + 1, theme, title });
+      if (title && !catalog.has(clean(title))) issues.warn("lecture_not_found", club, `Requested lecture '${title}' is not in lecture_info.csv.`);
+    });
+    return requests;
+  }
+
+  function makeClub(o) {
+    const seen = new Map();
+    for (const r of o.requests) if (r.theme && !seen.has(clean(r.theme))) seen.set(clean(r.theme), r.theme);
+    return Object.assign(o, { requested_themes: [...seen.values()], submitted_form: !!(o.requests.length || o.months.length) });
+  }
+
+  function loadClubs(rows, col, lectures, issues) {
+    const catalog = new Set(lectures.map((l) => clean(l.title))), clubs = [];
+    for (const row of rows.filter((r) => isInProgram(r, col))) {
+      const id = col.get(row, "id").trim(), name = col.get(row, "name").trim();
+      if (!(id && name)) { issues.warn("dropped_row", name || id || "club_info.csv", "Club row skipped because the ID or club name is blank."); continue; }
+      let size = col.get(row, "size").trim().toUpperCase();
+      if (!SIZE_CODES.includes(size) && col.has("size")) issues.warn("blank_size", name, size ? `Size '${size}' is not AA-F; using a middle value.` : "Size is blank; using a middle value.");
+      if (!SIZE_CODES.includes(size)) size = "";
+      const engagement = firstNumber(col.get(row, "hls_score").split(",").join(""));
+      if (engagement === null && col.has("hls_score")) issues.warn("blank_score", name, "HLS Score is blank; using a middle value.");
+      const months = parseMonths(col.get(row, "availability"));
+      const requests = readRequests(row, col, catalog, name, issues);
+      if (!(requests.length || months.length)) issues.warn("missing_availability", name, "No request form: Availability and Theme 1-5 are blank.");
+      else if (!months.length) issues.warn("missing_availability", name, "Availability is blank.");
+      else if (!requests.length) issues.warn("missing_availability", name, "No themes or lectures requested.");
+      clubs.push(makeClub({
+        id, name, size, region: col.get(row, "region").trim(), engagement, months, formats: splitList(col.get(row, "format")),
+        requests, past_speakers: col.getAll(row, "past_speakers").map((p) => p.trim()).filter(Boolean),
+        staff_pick: tidy(col.get(row, "staff_pick")), comments: tidy(row.Comments || ""),
+      }));
+    }
+    return clubs;
+  }
+
+  const usable = (col, rows) => (fieldsFor(col.file).filter((f) => f.required).every((f) => col.has(f.key)) ? rows : []);
+
+  function readAll(texts, columns, issues) {
+    const tables = {};
+    for (const group of ["club", "prof", "lecture"]) {
+      const [headers, rows] = readTable(texts[group]);
+      if (!rows.length) issues.error("empty_file", FILES[group], `${FILES[group]} has no data rows.`);
+      tables[group] = [resolve(group, headers, (columns || {})[group], issues), rows];
+    }
+    return tables;
+  }
+
+  /** texts = {club, prof, lecture} as CSV text. columns = optional overrides, as in COLUMN_SPEC. */
+  function loadInputs(texts, columns) {
+    const issues = new Issues();
+    const t = readAll(texts, columns, issues);
+    const [clubCol, clubRows] = t.club, [profCol, profRows] = t.prof, [lecCol, lecRows] = t.lecture;
+    const lectures = loadLectures(usable(lecCol, lecRows), lecCol, issues);
+    const profs = loadProfs(usable(profCol, profRows), profCol, issues);
+    attachLectures(profs, lectures, issues);
+    const clubs = loadClubs(usable(clubCol, clubRows), clubCol, lectures, issues);
+    return {
+      clubs, profs, lectures, issues: [...issues],
+      columns: Object.fromEntries(Object.entries(t).map(([g, [c]]) => [g, Object.assign({}, c.found)])),
+      headers: Object.fromEntries(Object.entries(t).map(([g, [c]]) => [g, c.headers])),
+    };
+  }
+
+  function dataIssues(data) {
+    const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+    return data.issues.slice().sort((a, b) => ((SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9))
+      || cmp(a.kind, b.kind) || cmp(a.subject, b.subject));
+  }
+
+  // ================================================================ scoring.py
+  const TITLE_BOOST = {
+    "provost": 1.30, "vice president": 1.25, "vice provost": 1.20, "dean": 1.20,
+    "associate provost": 1.15, "director": 1.15, "associate dean": 1.10, "program director": 1.10,
+    "assistant dean": 1.05, "associate professor": 1.05, "professor of the practice": 1.02,
+    "teaching professor": 1.00, "assistant professor": 1.00, "professor": 1.00,
+  };
+  const SIZE_VALUE = { AA: 1.00, A: 0.90, B: 0.80, C: 0.70, D: 0.60, E: 0.50, F: 0.40 };
+  const ENGAGEMENT_BANDS = [[600, 1.00], [450, 0.90], [350, 0.80], [250, 0.70], [150, 0.60], [0, 0.55]];
+  const UNKNOWN = 0.5, TITLE_BOOST_FROM_PRIORITY = 0.7, MIN_POINTS = 0.01;
+
+  const DEFAULT_WEIGHTS = {
+    lecture_match: 1.0, theme_match: 1.0, month_overlap: 1.0, format_match: 1.0, choice_rank: 1.0,
+    size: 1.0, engagement: 1.0, title: 1.0, repeat_penalty: 1.0, spread: 1.0, travel_bonus: 1.0, staff_pick: 0.0,
+  };
+  const OLD_NAMES = { size_weight: "size", eng_weight: "engagement", title_weight: "title" };
+  function coerceWeights(value) {
+    const w = Object.assign({}, DEFAULT_WEIGHTS);
+    for (let [k, v] of Object.entries(value || {})) {
+      k = OLD_NAMES[k] || k;
+      if (k in DEFAULT_WEIGHTS && v !== null && v !== undefined) w[k] = Math.max(0.0, Number(v));
+    }
+    return w;
+  }
+
+  const ALL_PLANS = "All plans", FAIRNESS_PLANS = "Recommended and Balanced";
+  const WEIGHT_INFO = {
+    lecture_match: { label: "Requested lecture", help: "Points when the professor gives a lecture the club asked for by name (10 each at 1x). Raise it to favour exact talks over loose theme matches.", group: "What the club asked for", applies_to: ALL_PLANS },
+    theme_match: { label: "Shared theme", help: "Points when the professor covers a theme the club asked for, even without the exact talk (5 each at 1x).", group: "What the club asked for", applies_to: ALL_PLANS },
+    choice_rank: { label: "Respect club's ranking", help: "How much a club's 1st choice beats its 5th. At 1x each step down the list is worth 10% less; 0 treats all five choices the same.", group: "What the club asked for", applies_to: ALL_PLANS },
+    month_overlap: { label: "Calendar flexibility", help: "Points for each month both sides are free (2 each at 1x). More shared months make scheduling easier. One shared month is always required.", group: "Logistics", applies_to: ALL_PLANS },
+    format_match: { label: "Talk format", help: "Points when the professor offers the format the club wants, such as a fireside chat (1 each at 1x).", group: "Logistics", applies_to: ALL_PLANS },
+    size: { label: "Club size", help: "How much bigger clubs (AA, A) are favoured over smaller ones (E, F). 0 treats every size alike.", group: "Which clubs come first", applies_to: ALL_PLANS + " except Most clubs served" },
+    engagement: { label: "Club engagement", help: "How much clubs with a high HLS Score are favoured. 0 ignores engagement.", group: "Which clubs come first", applies_to: ALL_PLANS + " except Most clubs served" },
+    title: { label: "Senior speakers for top clubs", help: "Boost for deans, provosts and directors when matched with high-priority clubs (up to 1.3x at 1x). 0 treats every title alike.", group: "Which clubs come first", applies_to: ALL_PLANS },
+    repeat_penalty: { label: "Avoid repeat speakers", help: "Penalty for sending a professor who spoke at this club in the last four years.", group: "Fairness", applies_to: FAIRNESS_PLANS },
+    spread: { label: "Spread events across faculty", help: "Makes a professor's 2nd and 3rd events cost more, so more faculty take part. 0 lets the best professors take every slot they offered.", group: "Fairness", applies_to: FAIRNESS_PLANS },
+    travel_bonus: { label: "Honour travel wishes", help: "Bonus when a professor asked to visit the club's city or region.", group: "Fairness", applies_to: FAIRNESS_PLANS },
+    staff_pick: { label: "Agree with staff's picks", help: "Bonus when the professor is the one already in the club's '2026 Assignment' column (10 points at 1x). Off by default so the plans stay an independent second opinion.", group: "Fairness", applies_to: ALL_PLANS },
+  };
+  for (const [k, info] of Object.entries(WEIGHT_INFO)) Object.assign(info, { default: DEFAULT_WEIGHTS[k], min: 0.0, max: k !== "staff_pick" ? 3.0 : 5.0 });
+
+  const engagementValue = (s) => (s === null || s === undefined ? UNKNOWN : ENGAGEMENT_BANDS.find(([floor]) => s >= floor)[1]);
+  function clubPriority(club, w) {
+    const a = 0.65 * w.size, b = 0.35 * w.engagement;
+    if (a + b === 0) return 1.0;
+    return (a * (SIZE_VALUE[club.size] ?? UNKNOWN) + b * engagementValue(club.engagement)) / (a + b);
+  }
+  const titleBoost = (prof, w) => 1.0 + w.title * ((TITLE_BOOST[prof.title] ?? 1.0) - 1.0);
+  const choiceFactor = (rank, w) => (rank === null || rank === undefined ? 1.0 : Math.max(0.2, 1.0 - 0.1 * w.choice_rank * (rank - 1)));
+
+  const PLACE_ALIASES = {
+    "bay area": ["san francisco", "san jose"], "silicon valley": ["san francisco", "san jose"],
+    "dc": ["washington", "maryland"], "nyc": ["new york city"], "new england": ["boston", "new haven"],
+    "california": ["san francisco", "san diego", "orange county", "los angeles", "palm springs", "san jose"],
+    "arizona": ["phoenix"], "colorado": ["denver", "southern colorado"],
+  };
+  const reEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function wantsToVisit(prof, club) {
+    const wish = clean(prof.travel_wishes);
+    if (!wish) return false;
+    const mentions = (phrase) => new RegExp(`(?<![\\p{L}\\p{N}_])${reEscape(phrase)}(?![\\p{L}\\p{N}_])`, "u").test(wish);
+    const places = club.name.split(/[/,]/).filter((p) => p.trim().length >= 4).map(clean);
+    if (club.region) places.push(clean(club.region));
+    if (places.some(mentions)) return true;
+    const clubName = clean(club.name), region = clean(club.region);
+    return Object.entries(PLACE_ALIASES).some(([alias, targets]) => mentions(alias) && targets.some((t) => clubName.includes(t) || t === region));
+  }
+
+  function why(pair) {
+    let reasons;
+    if (pair.lectures.length) {
+      const [rank, title] = pair.lectures[0];
+      reasons = [`${ordinal(rank)}-choice lecture '${title}'`];
+      if (pair.lectures.length > 1) reasons.push(`+${pair.lectures.length - 1} more requested`);
+    } else reasons = [`${ordinal(pair.choice_rank)}-choice theme ${pair.shared_themes[0]}`];
+    const n = pair.shared_months.length;
+    reasons.push(`${n} shared month${n === 1 ? "" : "s"}`);
+    if (pair.travel) reasons.push("in professor's preferred area");
+    if (pair.repeat) reasons.push("REPEAT speaker");
+    return reasons.join("; ");
+  }
+
+  function scorePair(club, prof, w) {
+    const months = MONTHS.filter((m) => club.months.includes(m) && prof.months.includes(m));
+    const profThemes = prof.themes;
+    const themes = club.requested_themes.filter((t) => profThemes.has(clean(t)));
+    const lectures = [];
+    for (const r of club.requests) {
+      const lec = prof.offers(r.title);
+      if (lec && months.some((m) => lec.months.includes(m))) lectures.push([r.rank, lec.title]);
+    }
+    lectures.sort((x, y) => (x[0] - y[0]) || (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : 0));
+    const profFormats = new Set(prof.formats.map(clean));
+    const formats = club.formats.filter((f) => profFormats.has(clean(f)));
+
+    let rank = null;
+    if (lectures.length) rank = lectures[0][0];
+    else if (themes.length) rank = Math.min(...club.requests.filter((r) => r.theme && profThemes.has(clean(r.theme))).map((r) => r.rank));
+
+    const allowed = months.length > 0 && (themes.length > 0 || lectures.length > 0);
+    let fit = 0.0, score = 0.0, priority = null, boost = 1.0;
+    if (allowed) {
+      const staffChoice = !!club.staff_pick && samePerson(club.staff_pick, prof.name);
+      let lecSum = 0;
+      for (const [r] of lectures) lecSum += choiceFactor(r, w);
+      fit = 10 * w.lecture_match * lecSum
+        + 5 * w.theme_match * themes.length * choiceFactor(rank, w)
+        + 2 * w.month_overlap * months.length
+        + 1 * w.format_match * formats.length
+        + 10 * w.staff_pick * (staffChoice ? 1 : 0);
+      fit = Math.max(fit, MIN_POINTS);
+      priority = clubPriority(club, w);
+      boost = priority >= TITLE_BOOST_FROM_PRIORITY ? titleBoost(prof, w) : 1.0;
+      score = fit * priority * boost;
+    }
+    const pair = {
+      club, prof, shared_months: months, shared_themes: themes, lectures, shared_formats: formats, choice_rank: rank,
+      fit, score, priority, boost, repeat: club.past_speakers.some((s) => samePerson(prof.name, s)),
+      travel: wantsToVisit(prof, club), allowed,
+    };
+    pair.first_choice_lecture = lectures.length > 0 && lectures[0][0] === 1;
+    pair.why = () => why(pair);
+    return pair;
+  }
+
+  class PairGrid {
+    constructor(clubs, profs, w) {
+      this.clubs = clubs; this.profs = profs; this.weights = w;
+      this.pairs = clubs.map((club) => profs.map((prof) => scorePair(club, prof, w)));
+    }
+    at(c, p) { return this.pairs[c][p]; }
+    allowed() { const out = []; this.pairs.forEach((row, c) => row.forEach((pair, p) => { if (pair.allowed) out.push([c, p, pair]); })); return out; }
+    forClub(c) { return this.pairs[c]; }
+  }
+
+  // ================================================================ modes.py
+  const EVERY_CLUB_FIRST = 1000.0, PREFERENCE_FIRST = 100.0;
+  const clubPreference = (pair) => (pair.lectures.length ? Math.max(1, 6 - pair.lectures[0][0]) : Math.max(0.5, (6 - pair.choice_rank) / 2));
+  const spreadCost = (k, ctx) => ctx.weights.spread * 0.3 * ctx.typical_score * (k - 1);
+
+  const MODES = {
+    recommended: {
+      label: "Recommended",
+      description: "Serves as many clubs as possible, then gives each the lecture it wanted most, while avoiding repeat speakers, spreading events across faculty and honouring travel wishes.",
+      seatCost: spreadCost,
+      worth(pair, ctx) {
+        const w = ctx.weights;
+        let value = EVERY_CLUB_FIRST + PREFERENCE_FIRST * clubPreference(pair) + pair.score;
+        if (pair.repeat) value -= 60 * w.repeat_penalty;
+        if (pair.travel) value += 0.15 * w.travel_bonus * pair.score;
+        return value;
+      },
+    },
+    best_fit: { label: "Best fit", description: "The highest possible total match score: strongest content fit, favouring large, engaged clubs.", worth: (pair) => pair.score },
+    most_clubs: { label: "Most clubs served", description: "Serves as many clubs as possible and treats every club equally, regardless of size or engagement.", worth: (pair) => EVERY_CLUB_FIRST + pair.fit },
+    balanced: {
+      label: "Balanced",
+      description: "Strong fit while spreading events across more faculty, avoiding repeat speakers and honouring professors' preferred travel areas.",
+      seatCost: spreadCost,
+      worth(pair, ctx) {
+        const w = ctx.weights;
+        let value = pair.score;
+        if (pair.repeat) value *= Math.max(0.0, 1.0 - 0.6 * w.repeat_penalty);
+        if (pair.travel) value *= 1.0 + 0.15 * w.travel_bonus;
+        return value;
+      },
+    },
+    top_choices: { label: "Clubs' top choices", description: "Gives as many clubs as possible the exact lecture they ranked highest, then the best fit.", worth: (pair) => PREFERENCE_FIRST * clubPreference(pair) + pair.score },
+    legacy_greedy: { label: "Old method (greedy)", description: "The previous greedy algorithm on the cleaned data, for comparison.", worth: (pair) => pair.score, method: "greedy" },
+  };
+  const DEFAULT_MODES = ["recommended", "best_fit", "most_clubs", "balanced"];
+
+  function median(xs) {
+    if (!xs.length) return 0.0;
+    const s = xs.slice().sort((a, b) => a - b), n = s.length, h = Math.floor(n / 2);
+    return n % 2 ? s[h] : (s[h - 1] + s[h]) / 2;
+  }
+  const contextFor = (grid) => ({ weights: grid.weights, typical_score: median(grid.allowed().map(([, , p]) => p.score)) });
+
+  // ================================================================ solver.py
+  const FORBIDDEN = 1e12;
+
+  function hungarian(cost) {
+    const rows = cost.length;
+    if (!rows) return [];
+    const cols = cost[0].length;
+    const rowPot = new Array(rows + 1).fill(0.0), colPot = new Array(cols + 1).fill(0.0);
+    const owner = new Array(cols + 1).fill(0), cameFrom = new Array(cols + 1).fill(0);
+    for (let row = 1; row <= rows; row++) {
+      owner[0] = row;
+      let col = 0;
+      const best = new Array(cols + 1).fill(Infinity), done = new Array(cols + 1).fill(false);
+      for (;;) {
+        done[col] = true;
+        const r = owner[col];
+        let delta = Infinity, nextCol = 0;
+        for (let j = 1; j <= cols; j++) {
+          if (done[j]) continue;
+          const reduced = cost[r - 1][j - 1] - rowPot[r] - colPot[j];
+          if (reduced < best[j]) { best[j] = reduced; cameFrom[j] = col; }
+          if (best[j] < delta) { delta = best[j]; nextCol = j; }
+        }
+        for (let j = 0; j <= cols; j++) {
+          if (done[j]) { rowPot[owner[j]] += delta; colPot[j] -= delta; } else best[j] -= delta;
+        }
+        col = nextCol;
+        if (owner[col] === 0) break;
+      }
+      while (col) { const prev = cameFrom[col]; owner[col] = owner[prev]; col = prev; }
+    }
+    const assignment = new Array(rows).fill(-1);
+    for (let j = 1; j <= cols; j++) if (owner[j]) assignment[owner[j] - 1] = j - 1;
+    return assignment;
+  }
+
+  // seatCost(p, k) where k is the professor's k-th event overall (pins included)
+  function bestAssignment(nClubs, capacity, worth, seatCost, firstSeat) {
+    const seats = [];
+    capacity.forEach((cap, p) => { for (let k = 1; k <= cap; k++) seats.push([p, k + (firstSeat ? firstSeat[p] : 0)]); });
+    const cost = (c, p, k) => {
+      const value = worth(c, p);
+      if (value === null) return FORBIDDEN;
+      const net = value - (seatCost ? seatCost(p, k) : 0.0);
+      return net > 0 ? -net : FORBIDDEN;
+    };
+    const matrix = [];
+    for (let c = 0; c < nClubs; c++) matrix.push(seats.map(([p, k]) => cost(c, p, k)).concat(new Array(nClubs).fill(0.0)));
+    return hungarian(matrix).map((column, c) => (column < seats.length && matrix[c][column] < FORBIDDEN ? seats[column][0] : null));
+  }
+
+  function greedyAssignment(nClubs, capacity, worth) {
+    const cands = [];
+    for (let p = 0; p < capacity.length; p++) for (let c = 0; c < nClubs; c++) { const v = worth(c, p); if (v !== null) cands.push([v, c, p]); }
+    cands.sort((x, y) => y[0] - x[0]);
+    const chosen = new Array(nClubs).fill(null), used = new Array(capacity.length).fill(0);
+    for (const [, c, p] of cands) if (chosen[c] === null && used[p] < capacity[p]) { chosen[c] = p; used[p]++; }
+    return chosen;
+  }
+
+  // ================================================================ plans.py
+  const SUMMARY_LABELS = {
+    clubs_matched: "Clubs matched", clubs_unmatched: "Clubs without a speaker",
+    first_choice_lectures: "Got their 1st-choice lecture", requested_lecture_matches: "Got a lecture they asked for",
+    top_choice_matches: "Got their 1st-choice theme or lecture", total_score: "Total match score", avg_score: "Average match score",
+    profs_used: "Professors used", profs_available: "Professors who could be used", max_events_per_prof: "Most events for one professor",
+    profs_with_multiple_events: "Professors with 2+ events", repeat_speakers: "Repeat speakers",
+    month_clashes: "Professors double-booked in a month", staff_pick_agreement: "Same as staff's 2026 pick", clubs_total: "Clubs in the program",
+  };
+
+  /** Each club's professor index (or null). pins = [[clubId, profName]] booked first. */
+  function choose(modeKey, grid, ctx, pins, notes) {
+    const mode = MODES[modeKey];
+    const nC = grid.clubs.length, nP = grid.profs.length;
+    const fixed = new Array(nC).fill(null), used = new Array(nP).fill(0);
+    for (const [clubId, profName] of pins || []) {
+      const c = grid.clubs.findIndex((x) => x.id === clubId);
+      const p = grid.profs.findIndex((x) => x.name === profName);
+      if (c < 0 || p < 0) continue;
+      if (!grid.at(c, p).allowed) { if (notes) notes.push(`${profName} can't be booked for ${grid.clubs[c].name}: no shared month and topic.`); continue; }
+      if (fixed[c] !== null || used[p] >= grid.profs[p].max_events) { if (notes) notes.push(`${profName} couldn't also be booked for ${grid.clubs[c].name}: all their events are taken.`); continue; }
+      fixed[c] = p; used[p]++;
+    }
+    const worth = (c, p) => {
+      if (fixed[c] !== null) return null;
+      const pair = grid.at(c, p);
+      return pair.allowed ? mode.worth(pair, ctx) : null;
+    };
+    const capacity = grid.profs.map((prof, p) => prof.max_events - used[p]);
+    let chosen;
+    if (mode.method === "greedy") chosen = greedyAssignment(nC, capacity, worth);
+    else chosen = bestAssignment(nC, capacity, worth, mode.seatCost ? (p, k) => mode.seatCost(k, ctx) : null, used);
+    return chosen.map((p, c) => (fixed[c] !== null ? fixed[c] : p));
+  }
+
+  function suggestMonths(made) {
+    const byProf = new Map();
+    for (const pair of made) { if (!byProf.has(pair.prof.name)) byProf.set(pair.prof.name, []); byProf.get(pair.prof.name).push(pair); }
+    const months = new Map();
+    let clashes = 0;
+    for (const pairs of byProf.values()) {
+      const [picked, forced] = distinctMonths(pairs);
+      for (const [k, v] of picked) months.set(k, v);
+      if (forced > 0) clashes++;
+    }
+    return [months, clashes];
+  }
+  function distinctMonths(pairs) {
+    const order = pairs.map((p, i) => [p, i]).sort((a, b) => (a[0].shared_months.length - b[0].shared_months.length) || (a[1] - b[1])).map((x) => x[0]);
+    const best = { months: new Map(), forced: pairs.length + 1 };
+    const place = (i, taken, picked, forced) => {
+      if (forced >= best.forced) return;
+      if (i === order.length) { best.months = picked; best.forced = forced; return; }
+      const pair = order[i];
+      for (const m of pair.shared_months) if (!taken.has(m)) place(i + 1, new Set([...taken, m]), new Map([...picked, [pair, m]]), forced);
+      place(i + 1, taken, new Map([...picked, [pair, pair.shared_months[0]]]), forced + 1);
+    };
+    place(0, new Set(), new Map(), 0);
+    return [best.months, best.forced];
+  }
+
+  function fmt1(x) {
+    // Python's f"{x:.1f}" (round half to even on the exact value)
+    const t = x * 10, fl = Math.floor(t);
+    if (t - fl === 0.5) return ((fl % 2 === 0 ? fl : fl + 1) / 10).toFixed(1);
+    return x.toFixed(1);
+  }
+  const plural = (n, word) => `${n} ${word}${n > 1 ? "s" : ""}`;
+
+  function stillFree(c, grid, events) {
+    const club = grid.clubs[c], options = [];
+    grid.profs.forEach((prof, p) => {
+      const pair = grid.at(c, p), open = prof.max_events - (events[p] || 0);
+      if (open <= 0 || pair.repeat || !prof.lectures.length) return;
+      const named = clean(prof.travel_wishes).includes(clean(club.name.split("/")[0]));
+      let note = plural(open, "open slot");
+      if (named) note += `; asked for ${club.name} by name`;
+      else if (pair.travel) note += "; asked to visit this area";
+      options.push([[named ? 1 : 0, pair.travel ? 1 : 0, open, prof.months.length], prof.name, note]);
+    });
+    options.sort((a, b) => { for (let i = 0; i < 4; i++) if (a[0][i] !== b[0][i]) return b[0][i] - a[0][i]; return 0; });
+    return options.slice(0, 3).map(([, name, note]) => [name, `still free: ${note}`]);
+  }
+
+  function explainUnmatched(c, grid, events) {
+    const club = grid.clubs[c];
+    if (!club.submitted_form) return ["No request form submitted", stillFree(c, grid, events)];
+    if (!club.months.length) return ["Missing availability", stillFree(c, grid, events)];
+    if (!club.requests.length) return ["No themes or lectures requested", stillFree(c, grid, events)];
+    const pairs = grid.forClub(c);
+    if (!pairs.some((p) => p.shared_months.length)) return ["No shared months with any professor", []];
+    const allowed = pairs.filter((p) => p.allowed).sort((a, b) => b.score - a.score);
+    if (!allowed.length) {
+      const key = (p) => [(p.shared_themes.length || p.lectures.length) ? 1 : 0, p.shared_months.length];
+      const nearest = pairs.slice().sort((a, b) => { const ka = key(a), kb = key(b); return (kb[0] - ka[0]) || (kb[1] - ka[1]); });
+      return ["No content overlap with any available professor", nearest.slice(0, 3).map((p) =>
+        [p.prof.name, "near miss: " + (!p.shared_months.length ? "no shared month" : "no requested theme or lecture")])];
+    }
+    const suggestions = [];
+    let anyOpen = false;
+    for (const pair of allowed.slice(0, 3)) {
+      const used = events[grid.profs.indexOf(pair.prof)] || 0, cap = pair.prof.max_events, open = cap - used;
+      anyOpen = anyOpen || open > 0;
+      const st = open <= 0 ? `fully booked (${used}/${cap})` : plural(open, "open slot");
+      suggestions.push([pair.prof.name, `score ${fmt1(pair.score)}; ${st}; ${pair.why()}`]);
+    }
+    return [anyOpen ? "Left out so suitable professors are not overloaded" : "All suitable professors are fully booked", suggestions];
+  }
+
+  function summarize(made, grid, events, clashes) {
+    const n = made.length;
+    let total = 0;
+    for (const p of made) total += p.score;
+    const counts = Object.values(events);
+    const allowedProfs = new Set(grid.allowed().map(([, p]) => p));
+    const r = (x, d) => Number(x.toFixed(d));
+    return {
+      clubs_matched: n, clubs_total: grid.clubs.length, clubs_unmatched: grid.clubs.length - n,
+      profs_used: counts.length, profs_available: allowedProfs.size,
+      total_score: r(total, 1), avg_score: n ? r(total / n, 2) : 0.0,
+      top_choice_matches: made.filter((p) => p.choice_rank === 1).length,
+      first_choice_lectures: made.filter((p) => p.first_choice_lecture).length,
+      requested_lecture_matches: made.filter((p) => p.lectures.length).length,
+      repeat_speakers: made.filter((p) => p.repeat).length,
+      max_events_per_prof: counts.length ? Math.max(...counts) : 0,
+      profs_with_multiple_events: counts.filter((x) => x > 1).length,
+      month_clashes: clashes,
+      staff_pick_agreement: made.filter((p) => !!p.club.staff_pick && samePerson(p.club.staff_pick, p.prof.name)).length,
+    };
+  }
+
+  const byClubName = (a, b) => (a.club.name < b.club.name ? -1 : a.club.name > b.club.name ? 1 : 0);
+
+  function buildPlan(modeKey, grid, ctx, pins) {
+    const mode = MODES[modeKey], pinNotes = [];
+    const choice = choose(modeKey, grid, ctx, pins, pinNotes);
+    const made = [], events = {};
+    choice.forEach((p, c) => { if (p !== null) { made.push(grid.at(c, p)); events[p] = (events[p] || 0) + 1; } });
+    const [months, clashes] = suggestMonths(made);
+    const pinSet = new Set((pins || []).map(([c, p]) => c + "\u0000" + p));
+    const matches = made.map((pair) => ({
+      pair, suggested_month: months.get(pair), prof_events: events[grid.profs.indexOf(pair.prof)],
+      pinned: pinSet.has(pair.club.id + "\u0000" + pair.prof.name),
+    })).sort((a, b) => byClubName(a.pair, b.pair));
+    const unmatched = [];
+    choice.forEach((p, c) => {
+      if (p !== null) return;
+      const [reason, suggestions] = explainUnmatched(c, grid, events);
+      unmatched.push({ club: grid.clubs[c], reason, suggestions });
+    });
+    unmatched.sort((a, b) => (a.club.name < b.club.name ? -1 : a.club.name > b.club.name ? 1 : 0));
+    return { key: modeKey, label: mode.label, description: mode.description, matches, unmatched, events, choice,
+      summary: summarize(made, grid, events, clashes), pin_notes: pinNotes };
+  }
+
+  /** Score every pair once, then build each requested plan. */
+  function runPlans(data, weights, modes, pins) {
+    modes = modes || DEFAULT_MODES;
+    const grid = new PairGrid(data.clubs, data.profs, coerceWeights(weights));
+    const ctx = contextFor(grid);
+    const plans = {};
+    for (const key of modes) {
+      if (!MODES[key]) throw new Error(`Unknown mode '${key}'. Choose from: ${Object.keys(MODES).join(", ")}`);
+      plans[key] = buildPlan(key, grid, ctx, pins);
+    }
+    return { grid, ctx, plans };
+  }
+
+  // Which of the three files is this? Looks at the headers only.
+  function sniffKind(text) {
+    const [headers] = readTable(text);
+    const s = new Set(headers.map(squash));
+    const has = (...names) => names.some((n) => s.has(squash(n)));
+    if (has("Club Check", "HLS Score") || headers.some((h) => /^theme\d+$/.test(squash(h)))) return "club";
+    if (has("Recipient Full Name", "# of Events") || headers.some((h) => /^participate/.test(squash(h)))) return "prof";
+    if (has("Topic", "Lecture Title") && has("Faculty", "Professor", "Speaker")) return "lecture";
+    return null;
+  }
+
+  const api = {
+    MONTHS, MODES, DEFAULT_MODES, WEIGHT_INFO, DEFAULT_WEIGHTS, COLUMN_SPEC, SUMMARY_LABELS, FILES,
+    loadInputs, dataIssues, runPlans, coerceWeights, sniffKind, readTable, parseCSV, clean, nameKey, samePerson, ordinal,
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.Engine = api;
+})(typeof self !== "undefined" ? self : this);
+
+</script>
+<script>
+const SAMPLE = null;
+</script>
+<script>
+(function () {
+  "use strict";
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const MONTHS = Engine.MONTHS;
+  const FILES = [
+    ["club", "Club requests", "The alumni club request form, one row per club (usually called club_info)."],
+    ["prof", "Faculty responses", "The faculty survey, one row per professor (usually called prof_info)."],
+    ["lecture", "Lecture list", "The list of lectures and who gives them (usually called lecture_info)."],
+  ];
+  const FILE_NAME = Object.fromEntries(FILES.map(([k, n]) => [k, n]));
+  const STEPS = [
+    ["upload", "Add files", "Upload the three spreadsheets"],
+    ["review", "Review matches", "Check each club's speaker"],
+    ["fix", "Fix problems", "Clubs still without a speaker"],
+    ["download", "Download", "Save the results"],
+  ];
+
+  // Priorities in plain words: five levels instead of raw numbers.
+  const LEVELS = ["Off", "Low", "Standard", "High", "Max"];
+  const PRIORITIES = [
+    ["who", "Which clubs come first", [
+      ["size", "Bigger clubs first", "Larger clubs get the strongest speakers before smaller clubs do.", [0, 0.5, 1, 1.5, 2],
+        "Clubs are sized AA (largest) down to F. Turning this up means a large club is more likely to get the speaker it asked for when two clubs want the same professor. Off treats every club the same regardless of size."],
+      ["engagement", "Most active clubs first", "Clubs with a higher engagement (HLS) score get priority.", [0, 0.5, 1, 1.5, 2],
+        "Each club has an engagement (HLS) score from its activity. Turning this up favours clubs with higher scores when there's competition for a speaker. Off ignores the score."],
+      ["title", "Senior speakers for top clubs", "Deans, provosts and directors go to the most engaged clubs.", [0, 0.5, 1, 1.5, 2],
+        "Deans, provosts and directors get a small boost so they go to the biggest, most engaged clubs. Off treats every title the same."],
+    ]],
+    ["what", "What makes a good match", [
+      ["choice_rank", "Respect clubs' rankings", "Favour the talk a club ranked 1st over its later picks.", [0, 0.5, 1, 1.5, 2],
+        "Clubs list up to five talks in order. At Max, getting a club its 1st choice matters much more than its 3rd. At Off, any talk on the club's list counts the same."],
+      ["lecture_match", "Exact talk requested", "An exact requested talk counts more than just the same topic.", [0, 0.5, 1, 1.5, 2],
+        "A club can ask for a specific talk or just a topic area. Higher values reward giving clubs the exact talk they named. Lower values are happy with any talk on the right topic."],
+      ["month_overlap", "Easy to schedule", "Favour pairs who are both free in many of the same months.", [0, 0.5, 1, 1.5, 2],
+        "When a professor and a club share many free months, the event is easier to schedule. Higher values prefer those pairs. They must always share at least one month, whatever this is set to."],
+      ["format_match", "Preferred talk format", "Favour professors who offer the format the club asked for.", [0, 0.5, 1, 1.5, 2],
+        "Clubs choose formats such as a lecture with Q&A or a fireside chat. Higher values prefer professors who offer that format."],
+      ["staff_pick", "Agree with our team's picks", "Favour the speaker your team already pencilled in.", [0, 0.5, 1, 1.5, 2],
+        "If your team already pencilled in a speaker for a club (the '2026 Assignment' column), higher values make the plan more likely to keep that choice. Off by default, so the tool gives an independent second opinion."],
+    ]],
+    ["fair", "Fairness to clubs and faculty", [
+      ["repeat_penalty", "Avoid repeat speakers", "Avoid sending a club someone who spoke there in the last four years.", [0, 0.5, 1, 2, 3],
+        "Uses the 2022–2025 speaker columns. Higher values steer clubs away from someone they've already heard. Off allows repeats freely. Mainly affects the Recommended and Balanced plans."],
+      ["spread", "Share talks across faculty", "Avoid giving one professor several talks while others have none.", [0, 0.5, 1, 2, 3],
+        "Professors can offer several talks. Higher values spread talks across more faculty instead of giving a few people most of them. Mainly affects the Recommended and Balanced plans."],
+      ["travel_bonus", "Honour travel wishes", "Favour clubs in places professors said they'd like to visit.", [0, 0.5, 1, 2, 3],
+        "Professors can name places they'd like to visit. Higher values favour sending them there. Mainly affects the Recommended and Balanced plans."],
+    ]],
+  ];
+  const PRIORITY = Object.fromEntries(PRIORITIES.flatMap(([, , items]) => items.map((p) => [p[0], p])));
+  const STANDARD_LEVELS = Object.fromEntries(Object.keys(PRIORITY).map((k) => [k, k === "staff_pick" ? "Off" : "Standard"]));
+  const PLAN_ORDER = ["recommended", "most_clubs", "top_choices", "best_fit", "balanced", "legacy_greedy"];
+  const DEFAULTS = { plan: "recommended", levels: STANDARD_LEVELS };
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("hlsm2:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("hlsm2:" + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+  };
+  const saved = store.get("opts", {});
+  const state = {
+    files: { club: null, prof: null, lecture: null }, names: {}, usingSample: false, columns: { club: {}, prof: {}, lecture: {} },
+    opts: { plan: Engine.MODES[saved.plan] ? saved.plan : DEFAULTS.plan, levels: Object.assign({}, STANDARD_LEVELS, saved.levels || {}) },
+    pins: [], step: "upload", view: "clubs", q: "", sel: null, selProf: null, result: null, uploadMsg: null, setTab: "plan",
+  };
+
+  const weightsFrom = (levels) => Object.fromEntries(Object.entries(PRIORITY).map(([k, p]) => [k, p[3][Math.max(0, LEVELS.indexOf(levels[k]))]]));
+  const changedLevels = () => Object.entries(state.opts.levels).filter(([k, v]) => v !== STANDARD_LEVELS[k]);
+
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+
+  const R = () => state.result;
+  const ready = () => !!(R() && R().plan);
+  const monthsText = (list) => {
+    if (!list.length) return "no months given";
+    if (list.length === 12) return "any month";
+    const idx = list.map((m) => MONTHS.indexOf(m)).sort((a, b) => a - b), out = [];
+    for (let i = 0; i < idx.length; i++) {
+      let j = i; while (j + 1 < idx.length && idx[j + 1] === idx[j] + 1) j++;
+      const a = MONTHS[idx[i]].slice(0, 3), b = MONTHS[idx[j]].slice(0, 3);
+      out.push(j - i >= 2 ? `${a}–${b}` : j > i ? `${a}, ${b}` : a);
+      i = j;
+    }
+    return out.join(", ");
+  };
+  const lastName = (n) => n.split(" ").slice(-1)[0];
+  const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+  const titleOf = (prof) => (prof.title_raw ? prof.title_raw.split(/\r?\n/)[0] : cap(prof.title));
+  const plural = (n, w, many) => `${n} ${n === 1 ? w : many || w + "s"}`;
+
+  // ======================================================== engine glue
+  function rerun() {
+    store.set("opts", state.opts);
+    const f = state.files;
+    state.result = null;
+    if (f.club && f.prof && f.lecture) {
+      try {
+        const data = Engine.loadInputs(f, state.columns);
+        const blocking = data.issues.filter((i) => i.severity === "error" && (i.kind === "missing_column" || i.kind === "empty_file"));
+        if (blocking.length || !data.clubs.length || !data.profs.length) state.result = { data, blocking };
+        else {
+          const run = Engine.runPlans(data, weightsFrom(state.opts.levels), [state.opts.plan], state.pins);
+          state.result = { data, blocking, grid: run.grid, plan: run.plans[state.opts.plan] };
+        }
+      } catch (e) { state.result = { error: e.message }; }
+    }
+    if (state.step !== "upload" && !ready()) state.step = "upload";
+    render();
+  }
+
+  function allPlans() {
+    const r = R();
+    if (!r || !r.data || !r.plan) return [];
+    const run = Engine.runPlans(r.data, weightsFrom(state.opts.levels), PLAN_ORDER, state.pins);
+    return PLAN_ORDER.map((k) => run.plans[k]);
+  }
+
+  function pin(clubId, prof) {
+    state.pins = state.pins.filter(([c]) => c !== clubId).concat([[clubId, prof]]);
+    rerun();
+    toast(`${prof} is now booked for this club`);
+  }
+  function unpin(clubId) {
+    state.pins = state.pins.filter(([c]) => c !== clubId);
+    rerun();
+  }
+
+  // ======================================================== frame
+  function renderSteps() {
+    const order = STEPS.map((s) => s[0]);
+    const cur = order.indexOf(state.step);
+    $("#steps").innerHTML = STEPS.map(([k, what, hint], i) => {
+      const done = i < cur && ready();
+      const locked = i > 0 && !ready();
+      return `<button type="button" class="step ${done ? "done" : ""}" data-step="${k}" ${state.step === k ? 'aria-current="step"' : ""} ${locked ? "disabled" : ""}>
+        <span class="num">${done ? "✓" : i + 1}</span><span style="min-width:0"><span class="what">${what}</span><span class="hint">${hint}</span></span></button>`;
+    }).join("");
+    $$("[data-step]").forEach((b) => b.onclick = () => go(b.dataset.step));
+  }
+
+  function go(step) {
+    if (step !== "upload" && !ready()) return;
+    state.step = step;
+    render();
+    $("#stage").scrollTop = 0;
+  }
+
+  function frame(title, body, intro, back, next) {
+    return `<div class="stage-inner">
+      <div class="intro"><span class="i" aria-hidden="true">i</span><div><h1>${title}</h1><p>${intro}</p></div></div>
+      <div style="display:grid;gap:18px;align-content:start;min-width:0">${body}</div>
+      <div class="foot">${back ? `<button class="btn" type="button" data-go="${back[0]}">← ${back[1]}</button>` : "<span></span>"}
+        ${next ? `<button class="btn primary" type="button" data-go="${next[0]}" ${next[2] ? "disabled" : ""}>${next[1]} →</button>` : "<span></span>"}</div>
+    </div>`;
+  }
+
+  function render() {
+    renderSteps();
+    const s = $("#stage");
+    s.innerHTML = { upload: stepUpload, review: stepReview, fix: stepFix, download: stepDownload }[state.step]();
+    wire(s);
+  }
+
+  // ======================================================== step 1
+  const fieldLabel = (spec) => spec.meaning.split(",")[0].split(" (")[0].split(" '")[0];
+
+  function columnPicker(group, spec, current, headers) {
+    const id = `col-${group}-${spec.field}`;
+    if (spec.multi) {
+      const cur = new Set(Array.isArray(current) ? current : []);
+      return `<fieldset class="colpick multi"><legend>${esc(fieldLabel(spec))}</legend>
+        <div class="checks">${headers.map((h) => `<label><input type="checkbox" data-col="${group}" data-field="${spec.field}" value="${esc(h)}" ${cur.has(h) ? "checked" : ""}> ${esc(h)}</label>`).join("")}</div></fieldset>`;
+    }
+    return `<label class="colpick" for="${id}"><span>${esc(fieldLabel(spec))}</span>
+      <select id="${id}" data-col="${group}" data-field="${spec.field}"><option value="">${spec.required ? "Choose a column…" : "Not in this file"}</option>
+      ${headers.map((h) => `<option ${h === current ? "selected" : ""}>${esc(h)}</option>`).join("")}</select></label>`;
+  }
+
+  function missingColumnsCard() {
+    const r = R();
+    const missing = [];
+    for (const [g] of FILES) for (const spec of Engine.COLUMN_SPEC[g]) {
+      const v = r.data.columns[g][spec.field];
+      if (spec.required && !(Array.isArray(v) ? v.length : v)) missing.push([g, spec]);
+    }
+    const empty = r.blocking.filter((i) => i.kind === "empty_file");
+    return `<div class="card"><div class="card-h"><h2>One more thing before we can match</h2><span class="tag warn">Needs your help</span></div>
+      <div class="card-b" style="display:grid;gap:14px">
+        ${empty.map((i) => `<p><b>${esc(FILE_NAME[Object.keys(Engine.FILES).find((k) => Engine.FILES[k] === i.subject)] || i.subject)}</b> has no rows in it. Check you saved the right sheet.</p>`).join("")}
+        ${missing.length ? `<p>Some column names in your spreadsheets are different from last time, so we couldn't find these. Pick the column that holds each one and matching starts straight away.</p>
+        <div class="colgrid">${missing.map(([g, spec]) => `<div><div class="sub" style="margin-bottom:4px">In <b>${FILE_NAME[g]}</b>, usually headed “${esc(spec.label)}”</div>
+          ${columnPicker(g, spec, r.data.columns[g][spec.field], r.data.headers[g])}</div>`).join("")}</div>` : ""}
+      </div></div>`;
+  }
+
+  function stepUpload() {
+    const f = state.files, have = FILES.filter(([k]) => f[k]).length;
+    const r = R();
+    const list = FILES.map(([k, name, desc]) => `<div class="need ${f[k] ? "ok" : ""}">
+        <span class="dot" aria-hidden="true">${f[k] ? "✓" : ""}</span>
+        <div><b>${name}</b><span class="sub">${desc}</span>
+        <div class="status">${f[k] ? `Added${state.usingSample ? " (2026 file)" : `: ${esc(state.names[k] || "")}`}` : "Still needed"}</div></div></div>`).join("");
+    let banner = "";
+    if (state.uploadMsg) banner = `<div class="banner err">${esc(state.uploadMsg)}</div>`;
+    else if (r && r.error) banner = `<div class="banner err">These files couldn't be read: ${esc(r.error)}.</div>`;
+    else if (ready()) banner = `<div class="banner"><span>All three files are in. ${r.plan.summary.clubs_matched} of ${r.plan.summary.clubs_total} clubs already have a suggested speaker.</span><button class="btn primary small" type="button" data-go="review">Review the matches →</button></div>`;
+    const fixer = r && r.data && !r.plan ? missingColumnsCard() : "";
+    const body = `${banner}${fixer}
+      <div class="upload">
+        <div style="display:grid;gap:14px">
+          <div class="drop" id="drop">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>
+            <strong>Drag the three files here</strong>
+            <span class="muted">Excel or CSV files both work. Drop them all at once, in any order.</span>
+            <button class="btn primary" type="button" id="choose">Choose files from my computer</button>
+          </div>
+          <div class="card card-b howto">
+            <b>How to get the files</b>
+            <ol>
+              <li>Find the three spreadsheets: the club requests, the faculty responses and the lecture list.</li>
+              <li>If they're Excel files, use them as they are. If they're in Google Sheets, choose <b>File → Download → Microsoft Excel (.xlsx)</b>.</li>
+              <li>Drag the three files into the box above.</li>
+            </ol>
+            <p class="small muted">Your files are read on this computer only. Nothing is uploaded or saved anywhere.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Files needed</h2><span class="tag ${have === 3 ? "good" : "plain"}">${have} of 3 added</span></div>
+          <div class="checklist">${list}</div>
+          ${SAMPLE || have ? `<div class="card-b" style="border-top:1px solid var(--line);display:grid;gap:8px">
+            ${SAMPLE ? `<span class="small muted">Just looking around? Load this year's files to see how it works.</span>` : ""}
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">${SAMPLE ? `<button class="btn small" type="button" id="use-sample" ${state.usingSample ? "disabled" : ""}>${state.usingSample ? "2026 files loaded" : "Try it with the 2026 files"}</button>` : ""}
+            ${have ? `<button class="link small" type="button" id="clear-files">Remove files and start over</button>` : ""}</div>
+          </div>` : ""}
+        </div>
+      </div>`;
+    return frame("Step 1: Add the three planning spreadsheets", body,
+      "This tool suggests a faculty speaker for every alumni club that asked for a Hesburgh Lecture. To begin, add the club requests, the faculty responses and the lecture list. Matching starts as soon as all three are in.",
+      null, ["review", "Next: Review matches", !ready()]);
+  }
+
+  // ======================================================== step 2
+  function stepReview() {
+    const s = R().plan.summary;
+    const stats = `<div class="stats">
+      <div class="card stat"><span>Clubs with a speaker</span><b>${s.clubs_matched} <small>of ${s.clubs_total}</small></b></div>
+      <div class="card stat"><span>Got the talk they ranked 1st</span><b>${s.first_choice_lectures} <small>of ${s.clubs_matched}</small></b></div>
+      <div class="card stat"><span>Clubs that need your help</span><b>${s.clubs_unmatched}</b>${s.clubs_unmatched ? `<button class="link" type="button" data-go="fix">See what to do →</button>` : ""}</div>
+    </div>`;
+    const body = stats + (state.view === "clubs" ? reviewClubs() : reviewProfs());
+    return frame("Step 2: Review the suggested speakers", body,
+      "Click any club to see who was picked and why. If you'd rather send someone else, choose from the other speakers who fit, and the rest of the plan adjusts automatically. Nothing is final until you download it in Step 4.",
+      ["upload", "Back"], ["fix", "Next: Fix problems"]);
+  }
+
+  function viewToggle() {
+    return `<div class="seg" role="group" aria-label="Show list by"><button type="button" data-view="clubs" aria-pressed="${state.view === "clubs"}">By club</button><button type="button" data-view="profs" aria-pressed="${state.view === "profs"}">By speaker</button></div>`;
+  }
+
+  function reviewClubs() {
+    const ms = R().plan.matches;
+    const q = state.q.trim().toLowerCase();
+    const rows = ms.filter((m) => !q || [m.pair.club.name, m.pair.prof.name, m.pair.club.region, m.pair.lectures.map((l) => l[1]).join(" ")].join(" ").toLowerCase().includes(q));
+    if (!state.sel || !ms.some((m) => m.pair.club.id === state.sel)) state.sel = (ms[0] || { pair: { club: {} } }).pair.club.id;
+    const list = rows.map((m) => `<tr class="row" data-sel="${esc(m.pair.club.id)}" aria-selected="${m.pair.club.id === state.sel}" tabindex="0">
+        <td><div class="who">${esc(m.pair.club.name)}</div><div class="sub">${esc(m.pair.club.region)}</div></td>
+        <td><div class="who">${esc(m.pair.prof.name)}</div><div class="sub">${m.suggested_month ? `${esc(m.suggested_month)} suggested` : ""}</div></td>
+        <td style="text-align:right">${m.pinned ? `<span class="tag gold">Your pick</span>` : m.pair.repeat ? `<span class="tag warn">Repeat</span>` : ""}</td></tr>`).join("");
+    return `<div class="review">
+      <div class="card listcard">
+        <div class="tools"><input class="search" id="q" type="search" placeholder="Find a club or speaker" value="${esc(state.q)}" aria-label="Find a club or speaker">${viewToggle()}</div>
+        <div class="scroll"><table class="list"><thead><tr><th>Club</th><th>Suggested speaker</th><th></th></tr></thead>
+          <tbody>${list || `<tr><td colspan="3" class="muted" style="padding:24px">No club or speaker matches “${esc(state.q)}”.</td></tr>`}</tbody></table></div>
+      </div>
+      <div class="card" id="detail">${clubDetail()}</div>
+    </div>`;
+  }
+
+  const profIndex = (prof) => R().grid.profs.indexOf(prof);
+  const eventsOf = (prof) => R().plan.events[profIndex(prof)] || 0;
+  const hasRoom = (prof) => eventsOf(prof) < prof.max_events;
+
+  function reasonsFor(pair, month) {
+    const out = [];
+    if (pair.lectures.length) {
+      const [rank, title] = pair.lectures[0];
+      out.push(["✓", `Gives the club's ${Engine.ordinal(rank)}-choice talk: <b>${esc(title)}</b>`]);
+    } else out.push(["✓", `Speaks on the club's ${Engine.ordinal(pair.choice_rank)}-choice topic: <b>${esc(pair.shared_themes[0])}</b>`]);
+    out.push(["✓", `Both are free in <b>${monthsText(pair.shared_months)}</b>${month ? `. Suggested month: <b>${esc(month)}</b>` : ""}`]);
+    if (pair.shared_formats.length) out.push(["✓", `Happy to do the club's format: ${esc(pair.shared_formats.join("; "))}`]);
+    if (pair.travel) out.push(["✓", "Said they'd like to visit this area"]);
+    if (pair.repeat) out.push(["!", "Spoke to this club in the last four years. You may want to choose one of the other speakers below."]);
+    return out;
+  }
+
+  function clubDetail() {
+    const m = R().plan.matches.find((x) => x.pair.club.id === state.sel);
+    if (!m) return `<div class="card-b muted">Click a club on the left to see its details.</div>`;
+    const { pair } = m, club = pair.club, prof = pair.prof;
+    const shared = new Set(pair.shared_months), cm = new Set(club.months);
+    const c = R().grid.clubs.indexOf(club);
+    const alts = R().grid.forClub(c).filter((p) => p.allowed && p.prof !== prof).sort((a, b) => b.score - a.score).slice(0, 4);
+    return `<div class="card-b detail">
+      <div><div class="lead">${esc(club.name)}${club.region ? " · " + esc(club.region) : ""}</div><h2>${esc(prof.name)}</h2><div class="sub">${esc(titleOf(prof))} · booked for ${eventsOf(prof)} of the ${plural(prof.max_events, "event")} they offered</div></div>
+      <div class="sec"><h3>Why this speaker</h3><ul class="reasons">${reasonsFor(pair, m.suggested_month).map(([ic, t]) => `<li><span class="ic ${ic === "!" ? "w" : ""}">${ic}</span><span>${t}</span></li>`).join("")}</ul></div>
+      <div class="sec"><h3>Months</h3>
+        <div class="cal">${MONTHS.map((mo) => `<div class="${mo === m.suggested_month ? "both pick" : shared.has(mo) ? "both" : cm.has(mo) ? "club" : ""}" title="${mo}">${mo.slice(0, 3)}</div>`).join("")}</div>
+        <div class="cal-key"><span><i class="both pick"></i>Suggested</span><span><i class="both"></i>Both free</span><span><i class="club"></i>Only the club is free</span><span><i></i>Club not free</span></div></div>
+      ${club.comments ? `<div class="sec"><h3>Note from the club</h3><p class="quote">${esc(club.comments)}</p></div>` : ""}
+      <label class="keep"><input type="checkbox" id="keep" data-club="${esc(club.id)}" data-prof="${esc(prof.name)}" ${m.pinned ? "checked" : ""}> Keep ${esc(lastName(prof.name))} for ${esc(club.name)}, even if I change settings</label>
+      <div class="sec"><h3>Other speakers who could do this</h3>
+        ${alts.length ? `<div class="options">${alts.map((a) => `<div class="option">
+            <div><div class="nm">${esc(a.prof.name)}</div><div class="sub">${a.lectures.length ? `${Engine.ordinal(a.lectures[0][0])}-choice talk: ${esc(a.lectures[0][1])}` : `${Engine.ordinal(a.choice_rank)}-choice topic: ${esc(a.shared_themes[0])}`} · free ${monthsText(a.shared_months)}</div>
+              <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${hasRoom(a.prof) ? `<span class="tag good">Available</span>` : `<span class="tag plain">Already booked elsewhere</span>`}${a.repeat ? `<span class="tag warn">Spoke here recently</span>` : ""}</div></div>
+            <button class="btn small" type="button" data-pin="${esc(club.id)}" data-prof="${esc(a.prof.name)}">Choose instead</button></div>`).join("")}</div>
+          <p class="small muted">If you choose someone who is already booked elsewhere, that other club gets a new suggestion automatically.</p>`
+        : `<p class="muted">No other faculty member fits this club's months and topics.</p>`}
+      </div>
+      <details class="more"><summary>How the match score was worked out</summary>${scoreMath(pair)}</details>
+    </div>`;
+  }
+
+  function scoreMath(pair) {
+    const w = R().grid.weights, n = (x) => Number(x.toFixed(2));
+    const cf = (r) => (r === null ? 1 : Math.max(0.2, 1 - 0.1 * w.choice_rank * (r - 1)));
+    const lec = pair.lectures.reduce((s, [r]) => s + cf(r), 0) * 10 * w.lecture_match;
+    const th = 5 * w.theme_match * pair.shared_themes.length * cf(pair.choice_rank);
+    const mo = 2 * w.month_overlap * pair.shared_months.length, fo = 1 * w.format_match * pair.shared_formats.length;
+    const club = pair.club;
+    return `<table class="math">
+      <tr><td>Talks the club asked for (${pair.lectures.length}, earlier choices count more)</td><td>${n(lec)}</td></tr>
+      <tr><td>Topics in common (${pair.shared_themes.length})</td><td>${n(th)}</td></tr>
+      <tr><td>Months both are free (${pair.shared_months.length})</td><td>${n(mo)}</td></tr>
+      <tr><td>Talk formats in common (${pair.shared_formats.length})</td><td>${n(fo)}</td></tr>
+      ${pair.fit - (lec + th + mo + fo) > 0.05 ? `<tr><td>Your team's pick</td><td>${n(pair.fit - (lec + th + mo + fo))}</td></tr>` : ""}
+      <tr><td>Times club priority (size ${esc(club.size || "unknown")}, engagement ${club.engagement ?? "unknown"})</td><td>× ${pair.priority.toFixed(2)}</td></tr>
+      <tr><td>Times senior speaker boost${pair.priority >= 0.7 ? "" : " (only for top clubs)"}</td><td>× ${pair.boost.toFixed(2)}</td></tr>
+      <tr class="total"><td>Match score</td><td>${pair.score.toFixed(1)}</td></tr></table>
+      <p class="small muted" style="margin-top:8px">Higher means a better fit. The ${esc(R().plan.label)} plan also weighs serving every club, each club's ranking, repeat speakers and spreading talks across faculty.</p>`;
+  }
+
+  function profRows() {
+    const r = R(), allowedBy = new Map();
+    for (const [, p] of r.grid.allowed()) allowedBy.set(p, (allowedBy.get(p) || 0) + 1);
+    return r.grid.profs.map((prof, p) => {
+      const n = r.plan.events[p] || 0;
+      const status = !prof.lectures.length ? "No lectures on file" : !allowedBy.get(p) ? "No club fits" : n === 0 ? "Available, unassigned" : n >= prof.max_events ? "Full" : "Has room";
+      return { prof, p, n, status, booked: r.plan.matches.filter((m) => m.pair.prof === prof) };
+    }).sort((a, b) => (b.n - a.n) || (a.prof.name < b.prof.name ? -1 : 1));
+  }
+
+  function reviewProfs() {
+    const rowsAll = profRows();
+    const q = state.q.trim().toLowerCase();
+    const rows = rowsAll.filter((x) => !q || [x.prof.name, x.booked.map((m) => m.pair.club.name).join(" ")].join(" ").toLowerCase().includes(q));
+    if (!state.selProf || !rowsAll.some((x) => x.prof.name === state.selProf)) state.selProf = (rowsAll[0] || { prof: {} }).prof.name;
+    const plain = { "Full": ["good", "All events booked"], "Has room": ["gold", "Can take more"], "Available, unassigned": ["plain", "Not booked yet"], "No club fits": ["warn", "No club fits"], "No lectures on file": ["bad", "No lectures listed"] };
+    const list = rows.map((x) => `<tr class="row" data-prof-sel="${esc(x.prof.name)}" aria-selected="${x.prof.name === state.selProf}" tabindex="0">
+        <td><div class="who">${esc(x.prof.name)}</div><div class="sub">${esc(titleOf(x.prof))}</div></td>
+        <td><div class="load">${Array.from({ length: x.prof.max_events }, (_, k) => `<i class="${k < x.n ? "on" : ""}"></i>`).join("")}</div><div class="sub">${x.n} of ${x.prof.max_events} events</div></td>
+        <td style="text-align:right"><span class="tag ${plain[x.status][0]}">${plain[x.status][1]}</span></td></tr>`).join("");
+    const x = rowsAll.find((y) => y.prof.name === state.selProf);
+    let detail = `<div class="card-b muted">Click a speaker on the left to see their details.</div>`;
+    if (x) {
+      const prof = x.prof, grid = R().grid;
+      const fits = grid.clubs.map((club, c) => grid.at(c, x.p)).filter((pair) => pair.allowed && !x.booked.some((m) => m.pair === pair)).sort((a, b) => b.score - a.score).slice(0, 6);
+      const why = x.status === "No lectures on file" ? "This person isn't in the lecture list, so they can't be matched. Add their lectures to the lecture spreadsheet."
+        : x.status === "No club fits" ? "None of the clubs asked for their topics in months they're free."
+        : "Not booked yet. Other speakers were a closer fit for the clubs that want these topics.";
+      detail = `<div class="card-b detail">
+        <div><div class="lead">${esc(titleOf(prof))}</div><h2>${esc(prof.name)}</h2><div class="sub">Offered ${plural(prof.max_events, "event")} · free ${monthsText(prof.months)}</div></div>
+        <div class="sec"><h3>Booked with</h3>${x.booked.length ? `<ul class="reasons">${x.booked.map((m) => `<li><span class="ic">✓</span><span><b>${esc(m.pair.club.name)}</b>${m.suggested_month ? ` · ${esc(m.suggested_month)}` : ""}<br><span class="sub">${esc(m.pair.lectures.map((l) => l[1]).join("; ") || m.pair.shared_themes.join("; "))}</span></span></li>`).join("")}</ul>` : `<p class="muted">${why}</p>`}</div>
+        <div class="sec"><h3>Lectures they offer</h3><ul class="notes">${prof.lectures.map((l) => `<li>${esc(l.title)}</li>`).join("") || "<li>None listed</li>"}</ul></div>
+        ${fits.length ? `<div class="sec"><h3>Other clubs that could host them</h3><div class="options">${fits.map((pair) => `<div class="option"><div><div class="nm">${esc(pair.club.name)}</div><div class="sub">free ${monthsText(pair.shared_months)}</div></div><button class="btn small" type="button" data-pin="${esc(pair.club.id)}" data-prof="${esc(prof.name)}">Book for this club</button></div>`).join("")}</div></div>` : ""}
+        ${prof.travel_wishes ? `<div class="sec"><h3>Where they'd like to travel</h3><p class="quote">${esc(prof.travel_wishes)}</p></div>` : ""}
+      </div>`;
+    }
+    return `<div class="review">
+      <div class="card listcard">
+        <div class="tools"><input class="search" id="q" type="search" placeholder="Find a speaker or club" value="${esc(state.q)}" aria-label="Find a speaker or club">${viewToggle()}</div>
+        <div class="scroll"><table class="list"><thead><tr><th>Speaker</th><th>Events</th><th></th></tr></thead><tbody>${list}</tbody></table></div>
+      </div>
+      <div class="card" id="detail">${detail}</div>
+    </div>`;
+  }
+
+  // ======================================================== step 3
+  const PROBLEMS = {
+    "No request form submitted": ["These clubs didn't send a request form", ["Contact each club to see whether they'd like a speaker this year.", "If they would, suggest one of the speakers below who still have open slots (speakers who asked to visit that city are listed first).", "Or add their request to the club spreadsheet and add it again in Step 1. Everything re-matches automatically."], "bad"],
+    "Missing availability": ["These clubs didn't say which months they can host", ["Contact each club and ask which months work.", "Add the months to the Availability column in the club spreadsheet, then add it again in Step 1."], "bad"],
+    "No themes or lectures requested": ["These clubs didn't pick a talk or topic", ["Ask each club to choose up to five talks from the lecture list.", "Add them to the club spreadsheet, then add it again in Step 1."], "bad"],
+    "All suitable professors are fully booked": ["Good speakers exist, but they're already fully booked", ["Book one of the speakers below anyway (the club they move from gets a new suggestion), or", "ask a speaker whether they could do one more event, then raise their number in the faculty spreadsheet."], "warn"],
+    "Left out so suitable professors are not overloaded": ["A speaker fits, but would be taking on an extra talk", ["The plan held back so faculty aren't overloaded. If you're happy for a speaker to do more, book them below.", "To do this automatically, lower “Share talks across faculty” in Settings."], "warn"],
+    "No shared months with any professor": ["No speaker is free in the months these clubs picked", ["Ask the club whether other months would work, or ask a speaker about their availability."], "warn"],
+    "No content overlap with any available professor": ["No speaker offers what these clubs asked for", ["Ask the club to pick a different talk from the lecture list. The closest speakers are listed."], "warn"],
+  };
+
+  function suggestionLine(u, name, note) {
+    const r = R(), c = r.grid.clubs.indexOf(u.club), p = r.grid.profs.findIndex((x) => x.name === name);
+    const pair = p >= 0 ? r.grid.at(c, p) : null;
+    let sub;
+    if (note.startsWith("still free: ")) sub = cap(note.slice(12));
+    else if (note.startsWith("near miss: ")) sub = `Close, but ${note.slice(11)}`;
+    else if (pair) sub = `${pair.lectures.length ? `${Engine.ordinal(pair.lectures[0][0])}-choice talk` : `${Engine.ordinal(pair.choice_rank)}-choice topic`} · free ${monthsText(pair.shared_months)} · ${hasRoom(pair.prof) ? "available" : "fully booked"}`;
+    else sub = note;
+    const bookable = pair && pair.allowed;
+    return `<div class="option"><div><div class="nm">${esc(name)}</div><div class="sub">${esc(sub)}</div></div>
+      ${bookable ? `<button class="btn small" type="button" data-pin="${esc(u.club.id)}" data-prof="${esc(name)}">Book this speaker</button>` : `<span class="tag plain">${note.startsWith("still free") ? "Suggest to the club" : "Not a full fit"}</span>`}</div>`;
+  }
+
+  function stepFix() {
+    const { plan, data } = R();
+    const groups = {};
+    plan.unmatched.forEach((u) => (groups[u.reason] = groups[u.reason] || []).push(u));
+    const blocks = Object.entries(groups).map(([k, list]) => {
+      const [title, todo, tone] = PROBLEMS[k] || [k, [], "plain"];
+      return `<div class="card">
+        <div class="card-h"><h2>${title}</h2><span class="tag ${tone}">${plural(list.length, "club")}</span></div>
+        <div class="card-b"><b>What to do</b><ol class="todo-steps">${todo.map((t) => `<li>${t}</li>`).join("")}</ol></div>
+        ${list.map((u, i) => `<details class="problem" ${i === 0 ? "open" : ""}><summary><span><b>${esc(u.club.name)}</b> <span class="sub">${esc(u.club.region)}${u.club.months.length ? ` · free ${monthsText(u.club.months)}` : ""}</span></span>
+            <span class="sub">${u.suggestions.length ? plural(u.suggestions.length, "speaker") + " to try" : "No speaker to try"}</span></summary>
+          ${u.club.requests.length ? `<div class="sub">Asked for: ${esc(u.club.requests.map((q) => q.title || q.theme).join("; "))}</div>` : ""}
+          ${u.suggestions.length ? `<div class="options">${u.suggestions.map(([n, note]) => suggestionLine(u, n, note)).join("")}</div>` : ""}</details>`).join("")}
+      </div>`;
+    }).join("");
+    const issues = Engine.dataIssues(data);
+    const fixed = issues.filter((i) => i.kind === "name_mismatch");
+    const warns = issues.filter((i) => (i.severity === "error" || i.severity === "warning") && i.kind !== "name_mismatch" && i.kind !== "missing_availability");
+    const info = issues.filter((i) => i.severity === "info");
+    const line = (i) => `<li><b>${esc(i.subject)}:</b> ${esc(i.message)}</li>`;
+    const notes = `<div class="card"><div class="card-h"><h2>Things we noticed in your spreadsheets</h2></div>
+      <div class="card-b" style="display:grid;gap:14px">
+        ${warns.length ? `<div><b>Please check</b><ul class="notes">${warns.map(line).join("")}</ul></div>` : ""}
+        ${fixed.length ? `<details class="more"><summary>${plural(fixed.length, "name was", "names were")} spelled differently between files. We matched them up for you.</summary><ul class="notes">${fixed.map(line).join("")}</ul>
+          <p class="small muted" style="margin-top:8px">No action needed. Correcting the spelling in the spreadsheets will keep next year's run clean.</p></details>` : ""}
+        ${info.length ? `<details class="more"><summary>${plural(info.length, "other note")}, for your information</summary><ul class="notes">${info.map(line).join("")}</ul></details>` : ""}
+        ${!warns.length && !fixed.length ? `<p class="muted">Nothing to check. The spreadsheets look clean.</p>` : ""}
+      </div></div>`;
+    const pinNotes = plan.pin_notes.length ? `<div class="banner err">${plan.pin_notes.map(esc).join(" ")}</div>` : "";
+    const body = plan.unmatched.length
+      ? `${pinNotes}<div class="fixes">${blocks}${notes}</div>`
+      : `${pinNotes}<div class="banner">Every club has a speaker. There's nothing to fix.</div>${notes}`;
+    const n = plan.unmatched.length;
+    return frame("Step 3: Help the clubs that don't have a speaker yet", body,
+      n ? `${plural(n, "club")} couldn't be matched. They're grouped by reason below, with what to do for each. You can also go on to Step 4 and handle these later.` : "Every club has a suggested speaker.",
+      ["review", "Back"], ["download", "Next: Download"]);
+  }
+
+  // ======================================================== step 4
+  function stepDownload() {
+    const { plan } = R(), s = plan.summary, changed = changedLevels();
+    const body = `<div class="dl">
+      <div class="card"><div class="card-h"><h2>Excel workbook</h2><span class="tag gold">Recommended</span></div>
+        <div class="card-b"><p>One file with everything, ready to share with the team:</p>
+          <ul><li><b>Summary:</b> totals and the settings used</li><li><b>Matches:</b> each club, its speaker, suggested month, talk and backups</li><li><b>Needs attention:</b> clubs without a speaker, why, and who to try</li><li><b>Faculty:</b> how many events each speaker has</li><li><b>Plan comparison:</b> how the other plans would have done</li><li><b>Data check:</b> spelling fixes and warnings</li></ul>
+          <div><button class="btn primary" type="button" id="dl-xlsx">Download Excel workbook</button></div>
+          <p class="small muted" id="dl-note" hidden>Saving files isn't available in this view. Open the page in your browser to download.</p></div></div>
+      <div class="card"><div class="card-h"><h2>What you're saving</h2></div>
+        <div class="card-b"><dl class="facts">
+          <dt>Plan</dt><dd>${esc(plan.label)}</dd>
+          <dt>Clubs with a speaker</dt><dd>${s.clubs_matched} of ${s.clubs_total}</dd>
+          <dt>Got the talk they ranked 1st</dt><dd>${s.first_choice_lectures}</dd>
+          <dt>Faculty speaking</dt><dd>${s.profs_used}</dd>
+          <dt>Recent repeat speakers</dt><dd>${s.repeat_speakers}</dd>
+          <dt>Changes you made</dt><dd>${state.pins.length ? `${plural(state.pins.length, "speaker")} chosen by you` : "None"}</dd>
+          <dt>Priorities</dt><dd>${changed.length ? changed.map(([k, v]) => `${esc(PRIORITY[k][1])}: ${v}`).join("; ") : "Standard"}</dd>
+          <dt>Files used</dt><dd>${state.usingSample ? "2026 files" : FILES.map(([k]) => esc(state.names[k] || "")).join(", ")}</dd></dl>
+          <div><button class="btn small" type="button" id="dl-csv">Download matches only (CSV)</button></div>
+        </div></div>
+    </div>`;
+    return frame("Step 4: Save the results", body,
+      "Download the plan to share it or keep a record. If you change anything later, come back here and download again.",
+      ["fix", "Back"], null);
+  }
+
+  // ======================================================== overlays
+  function openModal(html) {
+    const o = $("#overlay");
+    o.innerHTML = html; o.hidden = false;
+    o.onclick = (e) => { if (e.target === o) closeModal(); };
+    $$("[data-close]", o).forEach((b) => b.onclick = closeModal);
+    const f = $(".x", o); if (f) f.focus();
+    return o;
+  }
+  function closeModal() { $("#overlay").hidden = true; $("#overlay").innerHTML = ""; }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#overlay").hidden) closeModal(); });
+
+  // What the first plan gains over each other plan, in numbers.
+  const COMPARE = [
+    ["clubs_matched", true, (n) => `${plural(n, "more club gets", "more clubs get")} a speaker`],
+    ["first_choice_lectures", true, (n) => `${plural(n, "more club gets", "more clubs get")} their 1st-choice talk`],
+    ["requested_lecture_matches", true, (n) => `${plural(n, "more club gets", "more clubs get")} a talk they asked for`],
+    ["repeat_speakers", false, (n) => `${plural(n, "fewer repeat speaker")}`],
+    ["profs_used", true, (n) => `${plural(n, "more professor shares", "more professors share")} the talks`],
+  ];
+  function whyBox(plans) {
+    const top = plans.find((p) => p.key === "recommended");
+    if (!top) return "";
+    const lines = [];
+    for (const other of plans) {
+      if (other === top) continue;
+      const gains = [], costs = [];
+      for (const [k, higher, phrase] of COMPARE) {
+        const d = top.summary[k] - other.summary[k];
+        if (!d) continue;
+        ((higher ? d > 0 : d < 0) ? gains : costs).push(phrase(Math.abs(d)));
+      }
+      if (gains.length) lines.push(`<li>Compared with <b>${esc(other.label)}</b>: ${gains.join("; ")}.${costs.length ? ` <span class="muted">Trade-off: ${other.label} has ${costs.join("; ").replace(/more|fewer/g, (w) => (w === "more" ? "fewer" : "more"))}.</span>` : ""}</li>`);
+    }
+    return lines.length ? `<div class="why"><b>Why Recommended?</b> Not sure which to choose? Start with Recommended. Here's what it gains, in numbers:<ul>${lines.join("")}</ul></div>` : "";
+  }
+
+  function settingsPlan(plans) {
+    const s = (p) => p.summary;
+    return `<div class="q"><b>Which plan should the matcher make?</b><div class="plans">
+      ${plans.map((p) => `<label class="radio"><input type="radio" name="plan" value="${p.key}" ${state.opts.plan === p.key ? "checked" : ""}><span><b>${esc(p.label)}${p.key === "recommended" ? ` <span class="tag gold">Recommended</span>` : ""}</b>
+        <span class="sub">${esc(p.description)}</span>
+        <span class="nums"><span>${s(p).clubs_matched} clubs with a speaker</span><span>${s(p).first_choice_lectures} got their 1st-choice talk</span><span>${plural(s(p).repeat_speakers, "repeat speaker")}</span><span>${s(p).profs_used} faculty speaking</span></span></span></label>`).join("")}</div>
+      ${whyBox(plans)}</div>`;
+  }
+
+  function settingsPriorities() {
+    const lv = state.opts.levels;
+    return `<p class="muted small">These decide who wins when two clubs want the same speaker. “Standard” is what most people should use.</p>
+      ${PRIORITIES.map(([, title, items]) => `<div class="q"><b>${title}</b><div class="prios">${items.map(([k, label, summary, , explain]) => `<div class="prio">
+        <div class="prio-h"><span><b>${esc(label)}</b><span class="sub">${esc(summary)}</span></span>
+          <select data-level="${k}" aria-label="${esc(label)}">${LEVELS.map((l) => `<option ${lv[k] === l ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+        <details class="what"><summary>What does this do?</summary><p>${esc(explain)}</p></details></div>`).join("")}</div></div>`).join("")}`;
+  }
+
+  function settingsColumns() {
+    const r = R();
+    if (!r || !r.data) return `<p class="muted">Add your files in Step 1 first. Then you can check which column the matcher reads for each piece of information.</p>`;
+    return `<p class="muted small">You only need this if a spreadsheet's column names changed. The matcher finds columns by name and handles small changes on its own.</p>
+      ${FILES.map(([g, name]) => `<details class="more colsec"><summary>${name}</summary><div class="colgrid">
+        ${Engine.COLUMN_SPEC[g].map((spec) => columnPicker(g, spec, r.data.columns[g][spec.field], r.data.headers[g])).join("")}</div></details>`).join("")}`;
+  }
+
+  function openSettings() {
+    const plans = allPlans();
+    const tabs = [["plan", "Plan"], ["prio", "Priorities"], ["cols", "Spreadsheet columns"]];
+    const body = () => (state.setTab === "plan" ? (plans.length ? settingsPlan(plans) : `<p class="muted">Add your files in Step 1 to compare the plans side by side. You can still pick one now.</p>${settingsPlanNoData()}`)
+      : state.setTab === "prio" ? settingsPriorities() : settingsColumns());
+    const m = openModal(`<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="set-t">
+      <div class="modal-h"><div><h2 id="set-t">Matching settings</h2><p class="muted small">Most people never need to change these. The recommended settings are already on.</p></div><button class="x" type="button" data-close aria-label="Close">×</button></div>
+      <div class="modal-tabs seg" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" data-settab="${k}" aria-pressed="${state.setTab === k}">${l}</button>`).join("")}</div>
+      <div class="modal-b" id="set-body">${body()}</div>
+      <div class="modal-f"><button class="btn" type="button" id="reset">Reset to recommended</button><button class="btn primary" type="button" id="apply">Apply settings</button></div>
+    </div>`);
+    const pending = { plan: state.opts.plan, levels: Object.assign({}, state.opts.levels), columns: JSON.parse(JSON.stringify(state.columns)) };
+    const bind = () => {
+      $$("input[name=plan]", m).forEach((r) => r.onchange = () => { pending.plan = r.value; });
+      $$("select[data-level]", m).forEach((s) => s.onchange = () => { pending.levels[s.dataset.level] = s.value; });
+      bindColumnPickers(m, pending.columns);
+    };
+    $$("[data-settab]", m).forEach((b) => b.onclick = () => {
+      state.setTab = b.dataset.settab;
+      $$("[data-settab]", m).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      const save = { plan: state.opts.plan, levels: state.opts.levels };
+      state.opts.plan = pending.plan; state.opts.levels = pending.levels;
+      $("#set-body", m).innerHTML = body();
+      state.opts.plan = save.plan; state.opts.levels = save.levels;
+      bind();
+    });
+    bind();
+    $("#reset", m).onclick = () => { state.opts = JSON.parse(JSON.stringify(DEFAULTS)); closeModal(); rerun(); toast("Recommended settings restored"); };
+    $("#apply", m).onclick = () => {
+      state.opts.plan = pending.plan; state.opts.levels = pending.levels; state.columns = pending.columns;
+      closeModal(); rerun();
+      toast(ready() ? "Settings applied. Matches updated." : "Settings saved");
+    };
+  }
+  function settingsPlanNoData() {
+    return `<div class="q">${PLAN_ORDER.map((k) => `<label class="radio"><input type="radio" name="plan" value="${k}" ${state.opts.plan === k ? "checked" : ""}><span><b>${esc(Engine.MODES[k].label)}</b><span class="sub">${esc(Engine.MODES[k].description)}</span></span></label>`).join("")}</div>`;
+  }
+
+  function bindColumnPickers(scope, target) {
+    $$("select[data-col]", scope).forEach((s) => s.onchange = () => { target[s.dataset.col][s.dataset.field] = s.value || null; if (target === state.columns) rerun(); });
+    $$("input[type=checkbox][data-col]", scope).forEach((cb) => cb.onchange = () => {
+      const g = cb.dataset.col, f = cb.dataset.field;
+      target[g][f] = $$(`input[data-col="${g}"][data-field="${f}"]:checked`, scope).map((x) => x.value);
+      if (target === state.columns) rerun();
+    });
+  }
+
+  function openHelp() {
+    openModal(`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-t">
+      <div class="modal-h"><h2 id="help-t">How this works</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>
+      <div class="modal-b">
+        <div class="help-sec"><h3>Four steps</h3><ol>
+          <li><b>Add files:</b> drag in the club requests, faculty responses and lecture list. Excel or CSV both work.</li>
+          <li><b>Review matches:</b> every club gets a suggested speaker and month. Click a club to see why, or choose someone else.</li>
+          <li><b>Fix problems:</b> see which clubs have no speaker, and what to do about each.</li>
+          <li><b>Download:</b> save an Excel workbook to share with the team.</li></ol></div>
+        <div class="help-sec"><h3>The rules every match follows</h3><ul>
+          <li>The speaker and the club must both be free in at least one month.</li>
+          <li>The speaker must offer a talk or topic the club asked for.</li>
+          <li>Each club gets one speaker, and no one is booked for more events than they offered.</li></ul></div>
+        <div class="help-sec"><h3>How the Recommended plan chooses</h3><ol>
+          <li>Give as many clubs as possible a speaker.</li>
+          <li>Then give each club the talk it ranked highest.</li>
+          <li>Then avoid sending a club someone it heard in the last four years.</li>
+          <li>Then share talks across faculty, honour travel wishes, and pick the best overall fit.</li></ol>
+          <p class="small muted">Each goal counts for more than everything below it. Other plans are in Settings, with their numbers side by side.</p></div>
+        <div class="help-sec"><h3>Common questions</h3><ul>
+          <li><b>Why does a club have no speaker?</b> Usually the club didn't send a request form, or the speakers it wanted were fully booked. Step 3 says which.</li>
+          <li><b>Can I change a match?</b> Yes. In Step 2, click the club and pick from “Other speakers who could do this.” Everything else adjusts.</li>
+          <li><b>A column in our spreadsheet has a new name.</b> Small changes are handled automatically. If one can't be found, Step 1 asks you to pick it.</li>
+          <li><b>Are my files uploaded anywhere?</b> No. Everything happens in this browser window.</li>
+          <li><b>Names are spelled differently in two spreadsheets.</b> Close spellings are matched automatically and listed in Step 3.</li></ul></div>
+      </div>
+      <div class="modal-f"><span></span><button class="btn primary" type="button" data-close>Got it</button></div>
+    </div>`);
+  }
+  $("#open-settings").onclick = openSettings;
+  $("#open-help").onclick = openHelp;
+
+  // ======================================================== wiring
+  function wire(s) {
+    $$("[data-go]", s).forEach((b) => b.onclick = () => go(b.dataset.go));
+    $$("[data-view]", s).forEach((b) => b.onclick = () => { state.view = b.dataset.view; state.q = ""; render(); });
+    $$("[data-pin]", s).forEach((b) => b.onclick = () => pin(b.dataset.pin, b.dataset.prof));
+    bindColumnPickers(s, state.columns);
+    const keep = $("#keep", s);
+    if (keep) keep.onchange = () => { if (keep.checked) pin(keep.dataset.club, keep.dataset.prof); else { unpin(keep.dataset.club); toast("The matcher may change this pairing again"); } };
+    $$("tr[data-sel]", s).forEach((tr) => {
+      const pick = () => { state.sel = tr.dataset.sel; refreshDetail(clubDetail); };
+      tr.onclick = pick; tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+    });
+    $$("tr[data-prof-sel]", s).forEach((tr) => {
+      const pick = () => { state.selProf = tr.dataset.profSel; render(); };
+      tr.onclick = pick; tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+    });
+    const q = $("#q", s);
+    if (q) q.oninput = (e) => { state.q = e.target.value; const pos = e.target.selectionStart; render(); const nq = $("#q"); nq.focus(); nq.setSelectionRange(pos, pos); };
+    const drop = $("#drop", s);
+    if (drop) {
+      ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+      ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+      drop.addEventListener("drop", (e) => takeFiles([...e.dataTransfer.files]));
+      $("#choose", s).onclick = () => $("#file-input").click();
+    }
+    const us = $("#use-sample", s);
+    if (us) us.onclick = () => { state.files = { club: SAMPLE.club, prof: SAMPLE.prof, lecture: SAMPLE.lecture }; state.usingSample = true; state.uploadMsg = null; state.pins = []; state.columns = { club: {}, prof: {}, lecture: {} }; rerun(); toast("2026 files loaded"); };
+    const cf = $("#clear-files", s);
+    if (cf) cf.onclick = () => { state.files = { club: null, prof: null, lecture: null }; state.names = {}; state.usingSample = false; state.pins = []; state.uploadMsg = null; state.columns = { club: {}, prof: {}, lecture: {} }; rerun(); };
+    const x = $("#dl-xlsx", s); if (x) x.onclick = downloadXlsx;
+    const c = $("#dl-csv", s); if (c) c.onclick = () => save(`hesburgh_matches_${stamp()}.csv`, toCSV(matchRows()));
+    if (state.step === "download") checkDownloads();
+  }
+
+  function refreshDetail(fn) {
+    $$("tr[data-sel]").forEach((tr) => tr.setAttribute("aria-selected", String(tr.dataset.sel === state.sel)));
+    const d = $("#detail");
+    d.innerHTML = fn();
+    wire(d);
+    if (window.matchMedia("(max-width: 900px)").matches) d.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ======================================================== files
+  const csvCell = (v) => { const s = v === null || v === undefined ? "" : String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+
+  async function excelToCSV(file) {
+    if (typeof ExcelJS === "undefined") throw new Error("Excel support didn't load. Check your internet connection, or save the file as CSV.");
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await file.arrayBuffer());
+    const ws = wb.worksheets.find((w) => w.actualRowCount > 1) || wb.worksheets[0];
+    if (!ws) return "";
+    const rows = [];
+    ws.eachRow({ includeEmpty: false }, (row) => {
+      const vals = [];
+      for (let i = 1; i <= ws.columnCount; i++) {
+        const cell = row.getCell(i);
+        let v = cell.text;
+        if (cell.value instanceof Date) v = cell.value.toISOString().slice(0, 10);
+        vals.push(v ?? "");
+      }
+      rows.push(vals.map(csvCell).join(","));
+    });
+    return rows.join("\n");
+  }
+
+  async function readText(file) {
+    if (/\.xls[xm]?$/i.test(file.name)) {
+      if (/\.xls$/i.test(file.name)) throw new Error(`${file.name} is an old-style Excel file. Open it and save it as .xlsx or CSV first.`);
+      return excelToCSV(file);
+    }
+    const buf = await file.arrayBuffer();
+    try { return new TextDecoder("utf-8", { fatal: true }).decode(buf); } catch (e) { return new TextDecoder("windows-1252").decode(buf); }
+  }
+
+  function guessKind(text, name) {
+    const k = Engine.sniffKind(text);
+    if (k) return k;
+    const n = name.toLowerCase();
+    if (/club/.test(n)) return "club";
+    if (/prof|faculty/.test(n)) return "prof";
+    if (/lecture|topic/.test(n)) return "lecture";
+    return null;
+  }
+
+  async function takeFiles(list) {
+    const got = {}, unknown = [], failed = [];
+    for (const f of list) {
+      try {
+        const text = await readText(f);
+        const kind = guessKind(text, f.name);
+        if (kind) { got[kind] = text; state.names[kind] = f.name; } else unknown.push(f.name);
+      } catch (e) { failed.push(e.message); }
+    }
+    if (!Object.keys(got).length) {
+      state.uploadMsg = failed.length ? failed.join(" ") : `We couldn't tell what ${unknown.join(", ") || "that file"} is. Make sure it's one of the three planning spreadsheets.`;
+      render(); return;
+    }
+    if (state.usingSample) { state.files = { club: null, prof: null, lecture: null }; state.usingSample = false; }
+    Object.assign(state.files, got);
+    state.pins = [];
+    state.uploadMsg = failed.length ? failed.join(" ") : unknown.length ? `Skipped ${unknown.join(", ")}: it isn't one of the three planning spreadsheets.` : null;
+    rerun();
+    const missing = FILES.filter(([k]) => !state.files[k]).map(([, n]) => n.toLowerCase());
+    toast(missing.length ? `Got it. Still needed: ${missing.join(" and ")}.` : ready() ? "All three files are in" : "Files added. One more step is shown at the top.");
+  }
+  $("#file-input").addEventListener("change", (e) => { takeFiles([...e.target.files]); e.target.value = ""; });
+
+  // ======================================================== tables for saving
+  function matchRows() {
+    const r = R();
+    return r.plan.matches.map((m) => {
+      const { pair } = m, c = r.grid.clubs.indexOf(pair.club);
+      const alts = r.grid.forClub(c).filter((p) => p.allowed && p.prof !== pair.prof).sort((a, b) => b.score - a.score).slice(0, 3);
+      const row = {
+        "Club": pair.club.name, "Club ID": pair.club.id, "Region": pair.club.region, "Size": pair.club.size, "Engagement": pair.club.engagement ?? "",
+        "Speaker": pair.prof.name, "Title": titleOf(pair.prof), "Suggested month": m.suggested_month || "", "Months that work": pair.shared_months.join(", "),
+        "Talk": pair.lectures.map((l) => l[1]).join("; "), "Club's choice": pair.choice_rank ? Engine.ordinal(pair.choice_rank) : "",
+        "Topic": pair.shared_themes.join("; "), "Format": pair.shared_formats.join("; "), "Why": pair.why(),
+        "Repeat speaker": pair.repeat ? "Yes" : "", "Chosen by you": m.pinned ? "Yes" : "",
+        "Speaker's events": `${m.prof_events} of ${pair.prof.max_events}`, "Match score": Number(pair.score.toFixed(2)),
+      };
+      alts.forEach((a, i) => { row[`Backup ${i + 1}`] = `${a.prof.name}${hasRoom(a.prof) ? "" : " (booked)"}`; });
+      for (let i = alts.length; i < 3; i++) row[`Backup ${i + 1}`] = "";
+      if (pair.club.staff_pick) row["Team's pick"] = pair.club.staff_pick;
+      return row;
+    });
+  }
+  function unmatchedRows() {
+    return R().plan.unmatched.map((u) => {
+      const row = { "Club": u.club.name, "Club ID": u.club.id, "Region": u.club.region, "Problem": (PROBLEMS[u.reason] || [u.reason])[0], "What to do": ((PROBLEMS[u.reason] || [, []])[1]).join(" ") };
+      for (let i = 0; i < 3; i++) { const s = u.suggestions[i]; row[`Try ${i + 1}`] = s ? s[0] : ""; row[`Try ${i + 1} note`] = s ? s[1].replace(/^still free: |^near miss: /, "") : ""; }
+      return row;
+    });
+  }
+  function facultyRows() {
+    return profRows().map((x) => ({ "Speaker": x.prof.name, "Title": titleOf(x.prof), "Events booked": x.n, "Events offered": x.prof.max_events, "Status": x.status,
+      "Clubs": x.booked.map((m) => `${m.pair.club.name}${m.suggested_month ? ` (${m.suggested_month})` : ""}`).join("; "),
+      "Free months": x.prof.months.length === 12 ? "All year" : x.prof.months.join(", "), "Travel wishes": x.prof.travel_wishes }));
+  }
+  function comparisonRows() {
+    const plans = allPlans(), L = Engine.SUMMARY_LABELS;
+    const keys = ["clubs_matched", "first_choice_lectures", "requested_lecture_matches", "repeat_speakers", "profs_used", "max_events_per_prof", "month_clashes", "staff_pick_agreement", "total_score"];
+    return keys.map((k) => Object.assign({ "": L[k] }, Object.fromEntries(plans.map((p) => [p.label + (p.key === state.opts.plan ? " (this plan)" : ""), p.summary[k]]))));
+  }
+  const issueRows = () => Engine.dataIssues(R().data).map((i) => ({ "Type": { error: "Must fix", warning: "Worth a look", info: "For your information" }[i.severity], "About": i.subject, "Note": i.message }));
+
+  // ======================================================== downloads
+  let downloads;
+  async function checkDownloads() {
+    if (downloads === undefined) {
+      try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { downloads = null; }
+    }
+    const ok = !!downloads || typeof window.claude === "undefined";
+    const x = $("#dl-xlsx"), c = $("#dl-csv"), n = $("#dl-note");
+    if (x) x.disabled = !ok || typeof ExcelJS === "undefined";
+    if (c) c.disabled = !ok;
+    if (n) n.hidden = ok;
+  }
+  const stamp = () => new Date().toISOString().slice(0, 10);
+  async function save(filename, data) {
+    if (!downloads) {
+      // A normal web page (for example GitHub Pages): plain browser download.
+      const blob = data instanceof Blob ? data : new Blob([data], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast("Saved " + filename);
+      return;
+    }
+    try { await downloads.save({ filename, data }); toast("Saved " + filename); }
+    catch (e) {
+      if (e && e.code === "declined") return;
+      toast(e && e.code === "rate_limited" ? "A save is already waiting for you to confirm" : "Saving isn't available here");
+    }
+  }
+  function toCSV(rows) {
+    if (!rows.length) return "";
+    const cols = Object.keys(rows[0]);
+    return "﻿" + [cols.map(csvCell).join(",")].concat(rows.map((r) => cols.map((c) => csvCell(r[c])).join(","))).join("\r\n");
+  }
+
+  async function downloadXlsx() {
+    const { plan } = R(), L = Engine.SUMMARY_LABELS;
+    const wb = new ExcelJS.Workbook();
+    const navy = "FF0C2340", band = "FFF4F5F8", gold = "FF8F6C00";
+    const sum = wb.addWorksheet("Summary");
+    sum.getColumn(1).width = 38; sum.getColumn(2).width = 60;
+    sum.getCell("A1").value = "Hesburgh Lecture matches";
+    sum.getCell("A1").font = { bold: true, size: 16, color: { argb: navy } };
+    sum.getCell("A2").value = `Saved ${stamp()} · ${plan.label} plan`;
+    let r = 4;
+    const block = (title, pairs) => {
+      sum.getCell(r, 1).value = title; sum.getCell(r, 1).font = { bold: true, size: 12, color: { argb: gold } }; r++;
+      for (const [k, v] of pairs) { sum.getCell(r, 1).value = k; sum.getCell(r, 1).font = { bold: true }; sum.getCell(r, 2).value = v; sum.getCell(r, 2).alignment = { wrapText: true }; r++; }
+      r++;
+    };
+    block("Results", Object.entries(L).filter(([k]) => k in plan.summary).map(([k, label]) => [label, plan.summary[k]]));
+    block("Settings used", [["Plan", `${plan.label}: ${plan.description}`],
+      ...Object.entries(PRIORITY).map(([k, p]) => [p[1], state.opts.levels[k]]),
+      ["Speakers chosen by you", state.pins.map(([c, p]) => `${(R().grid.clubs.find((x) => x.id === c) || {}).name || c} → ${p}`).join("; ") || "None"]]);
+    const sheets = [["Matches", matchRows()], ["Needs attention", unmatchedRows()], ["Faculty", facultyRows()], ["Plan comparison", comparisonRows()], ["Data check", issueRows()]];
+    const wide = new Set(["Talk", "Why", "What to do", "Clubs", "Note", "Months that work", "Free months", "Travel wishes", "Topic", "Try 1 note", "Try 2 note", "Try 3 note"]);
+    for (const [name, rows] of sheets) {
+      const ws = wb.addWorksheet(name, { views: [{ state: "frozen", xSplit: 1, ySplit: 1 }] });
+      if (!rows.length) { ws.getCell("A1").value = "Nothing to show."; continue; }
+      const cols = Object.keys(rows[0]);
+      ws.columns = cols.map((c) => {
+        const longest = Math.max(c.length, ...rows.map((x) => String(x[c] ?? "").length));
+        return { header: c, key: c, width: Math.min(wide.has(c) ? 48 : 30, Math.max(9, longest + 2)) };
+      });
+      rows.forEach((x) => ws.addRow(x));
+      ws.getRow(1).height = 30;
+      ws.getRow(1).eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: navy } };
+        cell.alignment = { vertical: "middle", wrapText: true };
+      });
+      ws.eachRow((row, i) => {
+        if (i === 1) return;
+        row.eachCell({ includeEmpty: true }, (cell, ci) => {
+          cell.alignment = { vertical: "top", wrapText: wide.has(cols[ci - 1]) };
+          cell.border = { bottom: { style: "thin", color: { argb: "FFDDE2EA" } } };
+          if (i % 2 === 0) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: band } };
+        });
+      });
+      ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
+    }
+    const buf = await wb.xlsx.writeBuffer();
+    save(`hesburgh_matches_${stamp()}.xlsx`, new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>

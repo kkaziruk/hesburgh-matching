@@ -4,6 +4,31 @@ This pairs Notre Dame faculty with alumni clubs for the Hesburgh Lecture series.
 It reads three spreadsheet exports, then builds several complete plans side by
 side, each tuned for a different goal, so staff can choose one.
 
+## For staff: the Hesburgh Lecture Matcher
+
+Open the matcher page in a web browser and follow its four steps. Nothing needs installing.
+
+1. **Add files.** Drag in the three spreadsheets: the club requests (`club_info`),
+   the faculty responses (`prof_info`) and the lecture list (`lecture_info`).
+   Excel (.xlsx) or CSV both work, in any order. If a column has been renamed and
+   can't be found, the page asks you to pick it from a list.
+2. **Review matches.** Every club gets a suggested speaker and month. Click a club to
+   see why that speaker was picked. If you'd rather send someone else, press
+   **Choose instead** and the rest of the plan adjusts.
+3. **Fix problems.** Clubs without a speaker are grouped by reason, with what to do
+   and which speakers to try.
+4. **Download.** Save one Excel workbook with the matches, the clubs that need
+   attention, each speaker's load, a comparison of every plan, and a data check.
+
+The **Recommended** plan is on by default. **Settings** lets you pick another plan
+(each shows its numbers side by side), change priorities such as "Bigger clubs first"
+(each has a "What does this do?" note), or choose which column holds what.
+
+The page is `web/index.html`. Files are read inside the browser and never uploaded,
+and the page contains no club or faculty data. The JavaScript in `web/engine.js` is a
+line-by-line copy of the Python engine below; `node web/parity_check.js` confirms
+both give identical plans on the real files.
+
 ## Run it
 
 ```
@@ -21,7 +46,7 @@ This reads `club_info.csv`, `prof_info.csv`, `lecture_info.csv` and (if present)
 | `<plan>_unmatched.csv` | clubs with no speaker, why not, and three professors to try |
 | `data_issues.csv` | everything odd in the inputs (typos fixed, blank fields, missing forms) |
 
-Staff who would rather not touch a terminal use the web app in `ui/`.
+Staff who would rather not touch a terminal use the matcher page (`web/index.html`, above).
 
 ## The plans
 
@@ -98,15 +123,26 @@ The field names to use are listed in `engine/columns.py`.
 
 ## Tuning
 
-`weights.json` holds dials. 1 is the default, 0 switches a factor off and 2
-doubles it:
+Every dial is a multiplier: 1 is the default, 0 switches a factor off and 2
+doubles it. In the app each dial is a slider with a "?" that explains it.
+Without the app, put them in `weights.json`:
 
 ```json
-{ "size": 1, "engagement": 1, "title": 1, "choice_rank": 1,
-  "repeat_penalty": 1, "spread": 1, "travel_bonus": 1 }
+{ "lecture_match": 1, "theme_match": 1, "choice_rank": 1,
+  "month_overlap": 1, "format_match": 1,
+  "size": 1, "engagement": 1, "title": 1,
+  "repeat_penalty": 1, "spread": 1, "travel_bonus": 1, "staff_pick": 0 }
 ```
 
-The old names (`size_weight`, `eng_weight`, `title_weight`) still work.
+| group | dials |
+|---|---|
+| What the club asked for | requested lecture, shared theme, respect club's ranking |
+| Logistics | calendar flexibility, talk format |
+| Which clubs come first | club size, club engagement, senior speakers for top clubs |
+| Fairness | avoid repeat speakers, spread events across faculty, honour travel wishes, agree with staff's picks (off by default) |
+
+No dial can break the hard rules. The old names (`size_weight`, `eng_weight`,
+`title_weight`) still work.
 
 ## Folder map
 
